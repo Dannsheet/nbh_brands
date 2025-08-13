@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
@@ -286,11 +287,14 @@ export default function Page() {
         <div className="w-full lg:w-1/2 flex justify-center items-start">
           <div className="relative aspect-square w-full max-w-lg bg-black rounded-lg overflow-hidden shadow-lg">
             {imagenesDisponibles.length > 0 ? (
-              <img
+              <Image
                 src={imagenesDisponibles[indiceImagen]}
                 alt={producto.nombre}
-                className="w-full h-full object-cover"
-                loading="lazy"
+                fill
+                sizes="(min-width: 1024px) 512px, 90vw"
+                className="object-cover"
+                priority={false}
+                unoptimized={imagenesDisponibles[indiceImagen]?.startsWith('http')}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gray-900">

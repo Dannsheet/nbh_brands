@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import useSWR from 'swr';
 import CartItem from '@/components/cart/CartItem';
@@ -84,9 +85,9 @@ export default function CarritoPage() {
         <div className="p-6 text-center">
           <h2 className="text-2xl font-bold mb-4 uppercase">Tu carrito está vacío</h2>
           <p className="text-gray-400 mb-6">Parece que no has añadido nada aún.</p>
-          <a href="/" className="bg-yellow-400 text-black font-bold py-2 px-6 rounded hover:bg-yellow-500 transition-colors uppercase">
+          <Link href="/" className="bg-yellow-400 text-black font-bold py-2 px-6 rounded hover:bg-yellow-500 transition-colors uppercase">
             Ver productos
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

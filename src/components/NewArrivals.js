@@ -1,4 +1,6 @@
 // components/NewArrivals.js
+import Image from 'next/image';
+
 export default function NewArrivals() {
   const products = [
     {
@@ -30,10 +32,13 @@ export default function NewArrivals() {
             key={product.id}
             className="border p-4 rounded-lg relative hover:shadow-lg"
           >
-            <img
+            <Image
               src={product.image}
               alt={product.name}
+              width={800}
+              height={800}
               className="w-full h-64 object-cover rounded"
+              priority={false}
             />
             {product.isNew && (
               <span className="absolute top-2 left-2 bg-black text-white px-2 py-1 text-xs rounded">
