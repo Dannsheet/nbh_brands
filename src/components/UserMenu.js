@@ -64,10 +64,10 @@ export default function UserMenu({ user }) {
                   </Link>
                 )}
               </Menu.Item>
-              <Menu.Item href="/(auth)/registro" as="a">
+              <Menu.Item href="/registro" as="a">
                 {({ active }) => (
                   <Link
-                    href="/(auth)/registro"
+                    href="/registro"
                     className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                       active 
                         ? "bg-secondary text-primary" 
