@@ -9,6 +9,7 @@ export default function RegistroPage() {
     nombre: '',
     email: '',
     password: '',
+    confirmPassword: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,8 +34,13 @@ export default function RegistroPage() {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // 1. Crear el usuario en Supabase Auth
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -53,21 +59,18 @@ export default function RegistroPage() {
         throw new Error('No se pudo crear el usuario en el sistema de autenticación.');
       }
 
-      // 2. Insertar el perfil en la tabla 'usuarios'
       const { error: profileError } = await supabase.from('usuarios').insert({
-        id: authData.user.id, // El ID del usuario de auth
+        id: authData.user.id,
         nombre: formData.nombre.trim(),
         email: formData.email,
-        rol: 'cliente', // Rol por defecto
+        rol: 'cliente',
       });
 
       if (profileError) {
-        // Esto es crucial. Si falla la creación del perfil, debemos saberlo.
         setError('La cuenta fue creada, pero hubo un error al guardar el perfil.');
         throw profileError;
       }
 
-      // 3. Sincronizar la sesión para que el middleware la detecte
       if (authData.session) {
         await fetch('/api/auth/callback', {
           method: 'POST',
@@ -76,14 +79,11 @@ export default function RegistroPage() {
         });
       }
 
-      // 4. Redirigir al usuario
       router.push('/');
       router.refresh();
 
     } catch (error) {
       console.error('Error en el proceso de registro:', error);
-      // El error ya se ha establecido en los bloques `if` anteriores
-      // Si no se ha establecido, usamos un mensaje genérico.
       if (!error) {
         setError('Ocurrió un error inesperado. Inténtalo de nuevo.');
       }
@@ -106,69 +106,69 @@ export default function RegistroPage() {
       )}
 
       <div className="space-y-4">
-        <div>
-          <label htmlFor="nombre" className="sr-only">Nombre completo</label>
-          <input
-            id="nombre"
-            name="nombre"
-            type="text"
-            placeholder="Nombre completo"
-            value={formData.nombre}
-            onChange={handleChange}
-            disabled={loading}
-            required
-            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="sr-only">Correo electrónico</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Correo electrónico"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={loading}
-            required
-            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label htmlFor="password" className="sr-only">Contraseña</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Contraseña"
-            value={formData.password}
-            onChange={handleChange}
-            disabled={loading}
-            required
-            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
+        <input
+          id="nombre"
+          name="nombre"
+          type="text"
+          placeholder="Nombre completo"
+          value={formData.nombre}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Correo electrónico"
+          value={formData.email}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Contraseña"
+          value={formData.password}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          placeholder="Repetir contraseña"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
       </div>
 
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
-            loading ? 'opacity-80 cursor-not-allowed' : ''
-          }`}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              CREANDO CUENTA...
-            </>
-          ) : 'CREAR CUENTA'}
-        </button>
-      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
+          loading ? 'opacity-80 cursor-not-allowed' : ''
+        }`}
+      >
+        {loading ? (
+          <>
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            CREANDO CUENTA...
+          </>
+        ) : 'CREAR CUENTA'}
+      </button>
 
       <div className="text-center text-sm text-gray-400 mt-6">
         <p>¿Ya tienes una cuenta?{' '}
