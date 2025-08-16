@@ -27,37 +27,43 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // 1) Intentar login
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (loginError) {
-        setError('Credenciales incorrectas o usuario no encontrado.');
-        setLoading(false);
+        if (loginError.message.toLowerCase().includes('invalid login credentials')) {
+          setError('Correo o contraseña incorrectos.');
+        } else if (loginError.message.toLowerCase().includes('email not confirmed')) {
+          setError('Debes confirmar tu correo antes de ingresar.');
+        } else {
+          setError('No se pudo iniciar sesión. Inténtalo nuevamente.');
+        }
         return;
       }
 
-      const { data: session } = await supabase.auth.getSession();
-      console.log('Datos de sesión obtenidos:', session);
-
-      // Sincronizar sesión con el servidor para el middleware
-      if (data?.session) {
-        await fetch('/api/auth/callback', {
-          method: 'POST',
-          body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+      if (!data?.session) {
+        setError('No se pudo obtener una sesión activa.');
+        return;
       }
 
-      // Redirige al home o dashboard
+      // 2) Sincronizar sesión con tu backend para cookies/middleware
+      await fetch('/api/auth/callback', {
+        method: 'POST',
+        body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // 3) Redirigir
       router.push('/');
-      router.refresh(); // Forzar actualización para que el layout detecte la sesión
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      setError('Ocurrió un error al iniciar sesión. Inténtalo de nuevo.');
+      router.refresh();
+    } catch (err) {
+      console.error('❌ Login error:', err);
+      setError('Ocurrió un error inesperado al iniciar sesión.');
     } finally {
       setLoading(false);
     }
@@ -76,39 +82,33 @@ export default function LoginPage() {
         </div>
       )}
 
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="email" className="sr-only">Correo electrónico</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            placeholder="Correo electrónico"
-            value={formData.email}
-            onChange={handleChange}
-            disabled={loading}
-            required
-            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
+      <div className="space-y-4 max-w-md mx-auto">
+        <input
+          id="email"
+          name="email"
+          type="email"
+          placeholder="Correo electrónico"
+          value={formData.email}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
 
-        <div>
-          <label htmlFor="password" className="sr-only">Contraseña</label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Contraseña"
-            value={formData.password}
-            onChange={handleChange}
-            disabled={loading}
-            required
-            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-          />
-        </div>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          placeholder="Contraseña"
+          value={formData.password}
+          onChange={handleChange}
+          disabled={loading}
+          required
+          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+        />
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 max-w-md mx-auto">
         <button
           type="submit"
           disabled={loading}

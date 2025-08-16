@@ -14,6 +14,7 @@ export default function RegistroPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -26,10 +27,18 @@ export default function RegistroPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
+    // Validaciones cliente
     if (!formData.nombre.trim()) {
       setError('El nombre completo es obligatorio.');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('El correo electrónico es obligatorio.');
       setLoading(false);
       return;
     }
@@ -41,13 +50,19 @@ export default function RegistroPage() {
     }
 
     try {
+      // 1) Crear usuario en Supabase Auth con metadata
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            nombre: formData.nombre.trim(), // 👈 se guarda en raw_user_meta_data
+          },
+        },
       });
 
       if (signUpError) {
-        if (signUpError.message.includes('already registered')) {
+        if (signUpError.message && signUpError.message.toLowerCase().includes('already registered')) {
           setError('Este correo electrónico ya está registrado.');
         } else {
           setError(signUpError.message || 'Error al crear la cuenta.');
@@ -55,22 +70,11 @@ export default function RegistroPage() {
         throw signUpError;
       }
 
-      if (!authData.user) {
+      if (!authData || !authData.user) {
         throw new Error('No se pudo crear el usuario en el sistema de autenticación.');
       }
 
-      const { error: profileError } = await supabase.from('usuarios').insert({
-        id: authData.user.id,
-        nombre: formData.nombre.trim(),
-        email: formData.email,
-        rol: 'cliente',
-      });
-
-      if (profileError) {
-        setError('La cuenta fue creada, pero hubo un error al guardar el perfil.');
-        throw profileError;
-      }
-
+      // 2) Si Supabase devolvió session, avisamos al callback para setear cookies
       if (authData.session) {
         await fetch('/api/auth/callback', {
           method: 'POST',
@@ -79,11 +83,12 @@ export default function RegistroPage() {
         });
       }
 
+      // 3) Todo ok
+      setSuccessMessage('Cuenta creada correctamente. Si tu proveedor solicita verificación, revisa tu correo.');
       router.push('/');
       router.refresh();
-
-    } catch (error) {
-      console.error('Error en el proceso de registro:', error);
+    } catch (err) {
+      console.error('Error en el proceso de registro:', err);
       if (!error) {
         setError('Ocurrió un error inesperado. Inténtalo de nuevo.');
       }
@@ -105,7 +110,13 @@ export default function RegistroPage() {
         </div>
       )}
 
-      <div className="space-y-4">
+      {successMessage && (
+        <div className="bg-green-900/40 border-l-4 border-green-500 p-4 mb-6">
+          <p className="text-green-200 text-sm">{successMessage}</p>
+        </div>
+      )}
+
+      <div className="space-y-4 max-w-md mx-auto">
         <input
           id="nombre"
           name="nombre"
@@ -152,23 +163,25 @@ export default function RegistroPage() {
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
-          loading ? 'opacity-80 cursor-not-allowed' : ''
-        }`}
-      >
-        {loading ? (
-          <>
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            CREANDO CUENTA...
-          </>
-        ) : 'CREAR CUENTA'}
-      </button>
+      <div className="pt-2 max-w-md mx-auto">
+        <button
+          type="submit"
+          disabled={loading}
+          className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
+            loading ? 'opacity-80 cursor-not-allowed' : ''
+          }`}
+        >
+          {loading ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              CREANDO CUENTA...
+            </>
+          ) : 'CREAR CUENTA'}
+        </button>
+      </div>
 
       <div className="text-center text-sm text-gray-400 mt-6">
         <p>¿Ya tienes una cuenta?{' '}
