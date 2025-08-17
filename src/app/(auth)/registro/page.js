@@ -56,7 +56,7 @@ export default function RegistroPage() {
         password: formData.password,
         options: {
           data: {
-            nombre: formData.nombre.trim(), // 👈 se guarda en raw_user_meta_data
+            nombre: formData.nombre.trim(),
           },
         },
       });
@@ -83,10 +83,12 @@ export default function RegistroPage() {
         });
       }
 
-      // 3) Todo ok
-      setSuccessMessage('Cuenta creada correctamente. Si tu proveedor solicita verificación, revisa tu correo.');
-      router.push('/');
-      router.refresh();
+      // 3) Mostrar mensaje de verificación sin redirigir de inmediato
+      setSuccessMessage(
+        `Cuenta creada correctamente. 
+        Hemos enviado un correo de verificación a ${formData.email}. 
+        Revisa tu bandeja de entrada para activar tu cuenta.`
+      );
     } catch (err) {
       console.error('Error en el proceso de registro:', err);
       if (!error) {
@@ -111,85 +113,119 @@ export default function RegistroPage() {
       )}
 
       {successMessage && (
-        <div className="bg-green-900/40 border-l-4 border-green-500 p-4 mb-6">
-          <p className="text-green-200 text-sm">{successMessage}</p>
+        <div className="bg-green-900/40 border-l-4 border-green-500 p-4 mb-6 text-center">
+          <p className="text-green-200 text-sm mb-4">{successMessage}</p>
+          <a
+            href="/login"
+            className="inline-block px-4 py-2 bg-yellow-400 text-black font-bold rounded-md hover:bg-yellow-500 transition"
+          >
+            Ir a iniciar sesión
+          </a>
         </div>
       )}
 
-      <div className="space-y-4 max-w-md mx-auto">
-        <input
-          id="nombre"
-          name="nombre"
-          type="text"
-          placeholder="Nombre completo"
-          value={formData.nombre}
-          onChange={handleChange}
-          disabled={loading}
-          required
-          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-        />
-        <input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Correo electrónico"
-          value={formData.email}
-          onChange={handleChange}
-          disabled={loading}
-          required
-          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-        />
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Contraseña"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={loading}
-          required
-          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-        />
-        <input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          placeholder="Repetir contraseña"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          disabled={loading}
-          required
-          className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-        />
-      </div>
+      {!successMessage && (
+        <div className="space-y-4 max-w-md mx-auto">
+          <input
+            id="nombre"
+            name="nombre"
+            type="text"
+            placeholder="Nombre completo"
+            value={formData.nombre}
+            onChange={handleChange}
+            disabled={loading}
+            required
+            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+          />
+          <input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Correo electrónico"
+            value={formData.email}
+            onChange={handleChange}
+            disabled={loading}
+            required
+            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+          />
+          <input
+            id="password"
+            name="password"
+            type="password"
+            placeholder="Contraseña"
+            value={formData.password}
+            onChange={handleChange}
+            disabled={loading}
+            required
+            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+          />
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            placeholder="Repetir contraseña"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            disabled={loading}
+            required
+            className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+          />
+        </div>
+      )}
 
-      <div className="pt-2 max-w-md mx-auto">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
-            loading ? 'opacity-80 cursor-not-allowed' : ''
-          }`}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              CREANDO CUENTA...
-            </>
-          ) : 'CREAR CUENTA'}
-        </button>
-      </div>
+      {!successMessage && (
+        <div className="pt-2 max-w-md mx-auto">
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
+              loading ? 'opacity-80 cursor-not-allowed' : ''
+            }`}
+          >
+            {loading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-black"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                CREANDO CUENTA...
+              </>
+            ) : (
+              'CREAR CUENTA'
+            )}
+          </button>
+        </div>
+      )}
 
-      <div className="text-center text-sm text-gray-400 mt-6">
-        <p>¿Ya tienes una cuenta?{' '}
-          <a href="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
-            Inicia sesión
-          </a>
-        </p>
-      </div>
+      {!successMessage && (
+        <div className="text-center text-sm text-gray-400 mt-6">
+          <p>
+            ¿Ya tienes una cuenta?{' '}
+            <a
+              href="/login"
+              className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200"
+            >
+              Inicia sesión
+            </a>
+          </p>
+        </div>
+      )}
     </form>
   );
 }
