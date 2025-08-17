@@ -89,6 +89,8 @@ export default function InventarioProducto({ productoId, onAddToCart, onColorCha
       color: colorSeleccionado,
       talla: tallaSeleccionada,
       cantidad: cantidadSeleccionada,
+      producto_nombre: producto.nombre,
+      producto_id: producto.id,
     });
   };
 

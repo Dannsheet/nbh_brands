@@ -1,4 +1,3 @@
-// src/context/CartContext.js
 "use client";
 
 import { createContext, useContext, useCallback } from "react";
@@ -25,12 +24,12 @@ export function CartProvider({ children }) {
 
   // 🔹 Añadir item al carrito
   const addToCart = useCallback(
-    async ({ producto_id, color, talla, cantidad }) => {
+    async ({ producto_id, producto_nombre, color, talla, cantidad }) => {
       try {
         const res = await fetch("/api/carrito", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ producto_id, color, talla, cantidad }),
+          body: JSON.stringify({ producto_id, producto_nombre, color, talla, cantidad }),
         });
 
         if (!res.ok) throw new Error("Error al agregar al carrito");
@@ -40,8 +39,9 @@ export function CartProvider({ children }) {
         // Optimistic update
         mutate({ items: [...items, item] }, false);
 
+        // ✅ Mensaje más profesional y descriptivo
         toast.success(
-          `🛒 ${cantidad} ${cantidad > 1 ? "unidades" : "unidad"} agregada al carrito`
+          `🛒 ${cantidad} ${producto_nombre || "producto"} (${color}, ${talla}) agregado${cantidad > 1 ? "s" : ""} al carrito`
         );
       } catch (err) {
         console.error(err);
