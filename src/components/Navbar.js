@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import useCategoriasNavbar from '@/hooks/useCategoriasNavbar';
-import { ShoppingCart, Search, ChevronDown, Menu as MenuIcon, X } from 'lucide-react';
+import { ShoppingCart, Search, Menu as MenuIcon } from 'lucide-react';
+import { useCart } from '@/context/CartContext'; // 👈 Importamos el contexto del carrito
 
 const NavItem = dynamic(() => import('@/components/nav/NavItem'), { ssr: false });
 const MobileNavPanel = dynamic(() => import('@/components/nav/MobileNavPanel'), { ssr: false });
@@ -14,13 +15,14 @@ const UserMenu = dynamic(() => import('./UserMenu'), { ssr: false });
 
 export default function Navbar() {
   const [user, setUser] = useState(null);
-  // Hook centralizado para obtener categorías organizadas
   const { categorias, isLoading, isError } = useCategoriasNavbar();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const authSubscription = useRef(null);
 
+  // 👇 Obtenemos la cantidad total de items en el carrito desde el contexto
+  const { totalCantidad } = useCart();
+
   useEffect(() => {
-    // Get initial session
     const getInitialSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
@@ -28,16 +30,14 @@ export default function Navbar() {
 
     getInitialSession();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (_event, session) => {
         setUser(session?.user || null);
       }
     );
 
     authSubscription.current = subscription;
 
-    // Cleanup subscription on unmount
     return () => {
       if (authSubscription.current) {
         authSubscription.current.unsubscribe();
@@ -45,12 +45,10 @@ export default function Navbar() {
     };
   }, []);
 
-  // Definir el orden deseado para las categorías (cuando hay datos)
   const categoriaOrder = ['Colaboraciones', 'Camisetas', 'Pantalones', 'Accesorios'];
   const sortedCategorias = [...categorias].sort((a, b) => {
     const indexA = categoriaOrder.indexOf(a.nombre);
     const indexB = categoriaOrder.indexOf(b.nombre);
-    // Si alguna categoría no está en la lista, se va al final
     if (indexA === -1) return 1;
     if (indexB === -1) return -1;
     return indexA - indexB;
@@ -60,7 +58,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full bg-black text-white border-b border-yellow-500">
       <div className="mx-auto max-w-7xl flex items-center justify-between px-4 h-[60px]">
         
-        {/* Logo - lado izquierdo */}
+        {/* Logo */}
         <div className="flex items-center gap-2">
           <Link href="/" aria-label="Inicio" className="block h-12">
             <div className="relative w-[120px] h-full">
@@ -77,7 +75,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Categorías centradas */}
+        {/* Categorías */}
         <nav className="hidden md:flex items-center justify-center flex-1 gap-4">
           {sortedCategorias.map((cat) => (
             <NavItem key={cat.id} cat={cat} />
@@ -94,18 +92,24 @@ export default function Navbar() {
             <Search className="w-5 h-5" />
           </button>
           <UserMenu user={user} />
-          <Link href="/carrito" aria-label="Carrito">
+
+          {/* 🔹 Carrito con badge dinámico */}
+          <Link href="/carrito" className="relative" aria-label="Carrito">
             <ShoppingCart className="w-5 h-5 hover:text-yellow-500" />
+            {totalCantidad > 0 && (
+              <span className="absolute -top-2 -right-2 bg-yellow-400 text-black text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {totalCantidad > 9 ? "9+" : totalCantidad}
+              </span>
+            )}
           </Link>
 
-          {/* Menú hamburguesa */}
+          {/* Menú móvil */}
           <button className="md:hidden" onClick={() => setMobileMenuOpen(true)} aria-label="Menú móvil">
             <MenuIcon className="h-6 w-6" />
           </button>
         </div>
       </div>
 
-      {/* Menú móvil */}
       <MobileNavPanel isOpen={isMobileMenuOpen} onClose={() => setMobileMenuOpen(false)} categorias={sortedCategorias} />
     </header>
   );

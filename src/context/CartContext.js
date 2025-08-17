@@ -1,49 +1,136 @@
-'use client';
-import { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
+// src/context/CartContext.js
+"use client";
+
+import { createContext, useContext, useCallback } from "react";
+import useSWR from "swr";
+import toast from "react-hot-toast";
 
 const CartContext = createContext();
 
+const fetcher = async (url) => {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Error al cargar carrito");
+  return res.json();
+};
+
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data, error, mutate } = useSWR("/api/carrito", fetcher, {
+    revalidateOnFocus: false,
+  });
 
-  // cargar carrito inicial
-  useEffect(() => {
-    const fetchCart = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setItems([]);
-        setLoading(false);
-        return;
+  const items = data?.items || [];
+
+  // 🔹 Calcular cantidad total de items
+  const totalCantidad = items.reduce((acc, item) => acc + item.cantidad, 0);
+
+  // 🔹 Añadir item al carrito
+  const addToCart = useCallback(
+    async ({ producto_id, color, talla, cantidad }) => {
+      try {
+        const res = await fetch("/api/carrito", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ producto_id, color, talla, cantidad }),
+        });
+
+        if (!res.ok) throw new Error("Error al agregar al carrito");
+
+        const { item } = await res.json();
+
+        // Optimistic update
+        mutate({ items: [...items, item] }, false);
+
+        toast.success(
+          `🛒 ${cantidad} ${cantidad > 1 ? "unidades" : "unidad"} agregada al carrito`
+        );
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ No se pudo agregar al carrito");
+      } finally {
+        mutate();
       }
-      const { data, error } = await supabase
-        .from('carrito')
-        .select('id, cantidad, producto_id, color, talla');
-      if (!error) setItems(data || []);
-      setLoading(false);
-    };
-    fetchCart();
-  }, []);
+    },
+    [items, mutate]
+  );
 
-  const addItem = (item) => {
-    setItems((prev) => [...prev, item]);
-  };
+  // 🔹 Eliminar item del carrito
+  const removeFromCart = useCallback(
+    async (itemId) => {
+      try {
+        mutate({ items: items.filter((i) => i.id !== itemId) }, false);
+        await fetch("/api/carrito", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: itemId }),
+        });
+        toast.success("🗑️ Producto eliminado del carrito");
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ Error al eliminar producto");
+      } finally {
+        mutate();
+      }
+    },
+    [items, mutate]
+  );
 
-  const removeItem = (id) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
+  // 🔹 Actualizar cantidad
+  const updateQuantity = useCallback(
+    async (itemId, cantidad) => {
+      try {
+        mutate(
+          {
+            items: items.map((i) =>
+              i.id === itemId ? { ...i, cantidad } : i
+            ),
+          },
+          false
+        );
 
-  const updateQuantity = (id, cantidad) => {
-    setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, cantidad } : i))
-    );
-  };
+        await fetch("/api/carrito", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: itemId, cantidad }),
+        });
 
-  const count = items.reduce((acc, i) => acc + i.cantidad, 0);
+        toast.success("🔄 Cantidad actualizada");
+      } catch (err) {
+        console.error(err);
+        toast.error("❌ Error al actualizar cantidad");
+      } finally {
+        mutate();
+      }
+    },
+    [items, mutate]
+  );
+
+  // 🔹 Vaciar carrito (útil en checkout o logout)
+  const clearCart = useCallback(async () => {
+    try {
+      mutate({ items: [] }, false);
+      await fetch("/api/carrito/clear", { method: "POST" });
+      toast.success("🧹 Carrito vaciado");
+    } catch (err) {
+      console.error(err);
+      toast.error("❌ Error al vaciar carrito");
+    } finally {
+      mutate();
+    }
+  }, [mutate]);
 
   return (
-    <CartContext.Provider value={{ items, count, addItem, removeItem, updateQuantity, loading }}>
+    <CartContext.Provider
+      value={{
+        items,
+        totalCantidad,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        isLoading: !data && !error,
+        isError: error,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
