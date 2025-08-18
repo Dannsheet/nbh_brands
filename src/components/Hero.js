@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 // Puedes reemplazar cada ruta por las optimizadas en WebP/AVIF, por ejemplo:
 // { desktop: '/fondo1-desktop.webp', mobile: '/fondo1-mobile.webp' }
 const slides = [
-  { desktop: "/fondo1.png", mobile: "/fondo1.png" },
+  { desktop: "/fondo1.png", mobile: "/fondo1mobile.png" },
   { desktop: "/fondo2.png", mobile: "/fondo2mobile.png" },
   { desktop: "/fondo3.png", mobile: "/fondo3mobile.png" },
 ];
