@@ -19,17 +19,3 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
-
-/* TEMPORAL: ocultar navbar global en /admin */
-.admin-mode .global-navbar,
-.admin-mode header.global-navbar,
-.admin-mode [data-global-navbar="true"] {
-  display: none !important;
-  visibility: hidden !important;
-}
-
-/* Evitar títulos blancos sobre blanco (temporal) */
-.admin-mode h1,
-.admin-mode .admin-page-title {
-  color: #111827 !important; /* text-gray-900 */
-}

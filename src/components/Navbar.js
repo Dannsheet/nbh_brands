@@ -13,7 +13,6 @@ const MobileNavPanel = dynamic(() => import('@/components/nav/MobileNavPanel'), 
 const UserMenu = dynamic(() => import('./UserMenu'), { ssr: false });
 
 export default function Navbar() {
-  console.log('[TRACE] Navbar render');
   const { categorias, isLoading, isError } = useCategoriasNavbar();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 

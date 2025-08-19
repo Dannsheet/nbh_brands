@@ -26,7 +26,6 @@ const menuItems = [
 ];
 
 export default function AdminLayout({ children }) {
-  console.log('[TRACE] AdminLayout render');
   const router = useRouter();
   const pathname = usePathname();
 
@@ -111,9 +110,14 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <aside className={`bg-gray-800 text-white w-64 flex-shrink-0 flex flex-col transition-transform transform md:translate-x-0 ${sidebarOpen ? 'translate-x-0 z-20 absolute h-full' : '-translate-x-full'}`}>
+      <aside
+        data-admin-sidebar="true"
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-gray-800 text-white flex flex-col transition-transform duration-300 ease-in-out md:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-yellow-400 text-black rounded flex items-center justify-center font-bold">NBH</div>
@@ -128,13 +132,22 @@ export default function AdminLayout({ children }) {
               label={item.name}
               icon={item.icon}
               badge={item.key === 'ordenes' ? pendingOrders : undefined}
+              onClick={() => setSidebarOpen(false)} // Close on click for mobile
             />
           ))}
         </nav>
       </aside>
 
+      {/* Backdrop overlay for mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col md:pl-64">
         <AdminHeader 
           profile={profile}
           breadcrumbItems={breadcrumbItems}
