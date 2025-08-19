@@ -4,6 +4,7 @@ import { Menu, LogOut, User, Bell } from 'lucide-react';
 import Breadcrumb from './Breadcrumb';
 
 export default function AdminHeader({ profile, breadcrumbItems, onToggleSidebar, onLogout }) {
+  console.log('[TRACE] AdminHeader render');
   return (
     <header className="flex items-center justify-between bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-10">
       <div className="flex items-center gap-4">

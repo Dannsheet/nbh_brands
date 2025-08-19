@@ -26,6 +26,7 @@ const menuItems = [
 ];
 
 export default function AdminLayout({ children }) {
+  console.log('[TRACE] AdminLayout render');
   const router = useRouter();
   const pathname = usePathname();
 
