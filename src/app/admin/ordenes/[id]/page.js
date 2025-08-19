@@ -266,7 +266,7 @@ export default function OrdenDetalleAdminPage() {
           </div>
         </div>
 
-        <aside className="space-y-4">
+        <div className="space-y-4">
           <div className="bg-white p-4 rounded shadow">
             <h3 className="font-semibold">Estado</h3>
             <div className="mt-2">
@@ -314,7 +314,7 @@ export default function OrdenDetalleAdminPage() {
               <p className="text-sm text-gray-500">No hay comprobante asociado.</p>
             )}
           </div>
-        </aside>
+        </div>
       </div>
     </section>
   );
