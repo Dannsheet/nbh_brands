@@ -142,6 +142,10 @@ export async function PATCH(req) {
     const allowed = ['producto_id', 'color', 'talla', 'stock'];
     const payload = Object.fromEntries(Object.entries(fields).filter(([k]) => allowed.includes(k)));
 
+    if (Object.keys(payload).length === 0) {
+      return NextResponse.json({ error: 'Debe proporcionar al menos un campo válido para actualizar' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('inventario_productos')
       .update(payload)

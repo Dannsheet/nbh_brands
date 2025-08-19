@@ -97,6 +97,10 @@ export async function PATCH(req) {
     const allowed = ['nombre', 'email', 'rol'];
     const payload = Object.fromEntries(Object.entries(rest).filter(([k]) => allowed.includes(k)));
 
+    if (Object.keys(payload).length === 0) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
     const { data, error } = await supabase
       .from('usuarios')
       .update(payload)

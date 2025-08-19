@@ -2,7 +2,10 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import { FiSearch, FiDownload, FiEdit2, FiSave, FiX } from 'react-icons/fi';
+import { FiSearch, FiDownload, FiEdit2, FiSave, FiX, FiTrash2, FiPlus } from 'react-icons/fi';
+import Link from 'next/link';
+import ConfirmationModal from '@/components/admin/ConfirmationModal';
+import toast from 'react-hot-toast';
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,34 +13,36 @@ export default function InventoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingItem, setEditingItem] = useState(null);
   const [tempStock, setTempStock] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
   // Fetch inventory data on component mount
+  const fetchInventory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('inventario_productos')
+        .select(`
+          id,
+          producto_id,
+          color,
+          talla,
+          stock,
+          productos:producto_id(nombre, slug)
+        `)
+        .order('productos.nombre', { ascending: true })
+        .order('color', { ascending: true })
+        .order('talla', { ascending: true });
+
+      if (error) throw error;
+      setInventory(data || []);
+    } catch (error) {
+      console.error('Error fetching inventory:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchInventory = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('inventario_productos')
-          .select(`
-            id,
-            producto_id,
-            color,
-            talla,
-            stock,
-            productos:producto_id(nombre, slug)
-          `)
-          .order('productos.nombre', { ascending: true })
-          .order('color', { ascending: true })
-          .order('talla', { ascending: true });
-
-        if (error) throw error;
-        setInventory(data || []);
-      } catch (error) {
-        console.error('Error fetching inventory:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchInventory();
   }, []);
 
@@ -130,8 +135,37 @@ export default function InventoryPage() {
       );
       
       setEditingItem(null);
+      toast.success('Stock actualizado correctamente');
+      await fetchInventory(); // Refresh data
     } catch (error) {
       console.error('Error updating stock:', error);
+      toast.error('Error al actualizar el stock');
+    }
+  };
+
+  const handleDeleteClick = (item) => {
+    setItemToDelete(item);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      const { error } = await supabase
+        .from('inventario_productos')
+        .delete()
+        .eq('id', itemToDelete.id);
+
+      if (error) throw error;
+
+      toast.success('Variante eliminada correctamente');
+      await fetchInventory(); // Refresh data
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error('Error al eliminar la variante');
+    } finally {
+      setIsModalOpen(false);
+      setItemToDelete(null);
     }
   };
 
@@ -143,6 +177,10 @@ export default function InventoryPage() {
         <h1 className="text-2xl font-bold text-gray-900 uppercase">Inventario</h1>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <Link href="/admin/inventario/nuevo" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+            <FiPlus className="mr-2 h-4 w-4" />
+            Añadir item
+          </Link>
           <div className="relative flex-1">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FiSearch className="h-5 w-5 text-gray-400" />
@@ -206,8 +244,8 @@ export default function InventoryPage() {
                         <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Stock
                         </th>
-                        <th scope="col" className="relative px-6 py-3">
-                          <span className="sr-only">Acciones</span>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Acciones
                         </th>
                       </tr>
                     </thead>
@@ -273,7 +311,9 @@ export default function InventoryPage() {
                             )}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {/* Additional actions can go here */}
+                            <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">
+                              <FiTrash2 className="h-5 w-5" />
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -285,6 +325,13 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Confirmar Eliminación"
+        message={`¿Estás seguro de que quieres eliminar la variante ${itemToDelete?.color} - ${itemToDelete?.talla}? Esta acción no se puede deshacer.`}
+      />
     </div>
   );
 }

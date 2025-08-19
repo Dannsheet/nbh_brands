@@ -1,6 +1,6 @@
 // app/layout.js
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 import ConditionalNavbar from "../components/ConditionalNavbar";
 import Footer from "../components/Footer";
 
@@ -20,12 +20,14 @@ export default function RootLayout({ children }) {
         {/* 👇 envolvemos la app */}
         <CartProvider>
           <ConditionalNavbar />
-          {children}
+          <main className="pt-16 sm:pt-20">
+            {children}
+          </main>
           <Footer />
+          <Analytics />
           {/* 👇 Toaster para notificaciones */}
-          <Toaster position="top-right" />
+          <Toaster position="bottom-right" />
         </CartProvider>
-        <Analytics />
       </body>
     </html>
   );
