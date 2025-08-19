@@ -41,7 +41,7 @@ export default function OrdenDetalleAdminPage() {
               precio,
               producto:productos(id, nombre, stock)
             ),
-            comprobantes_pago (id, metodo, estado, comprobante_url, fecha)
+            comprobantes_pago (id, metodo_pago, estado, comprobante_url, fecha)
           `)
           .eq('id', id)
           .single();
@@ -81,7 +81,7 @@ export default function OrdenDetalleAdminPage() {
             precio,
             producto:productos(id, nombre, stock)
           ),
-          comprobantes_pago (id, metodo, estado, comprobante_url, fecha)
+          comprobantes_pago (id, metodo_pago, estado, comprobante_url, fecha)
         `)
         .eq('id', id)
         .single();
@@ -283,7 +283,7 @@ export default function OrdenDetalleAdminPage() {
             <h3 className="font-semibold">Comprobante</h3>
             {comprobante ? (
               <>
-                <p className="text-sm text-gray-600">Método: {comprobante.metodo}</p>
+                <p className="text-sm text-gray-600">Método: {comprobante.metodo_pago}</p>
                 <p className="text-sm text-gray-600">Estado: {comprobante.estado}</p>
 
                 <div className="mt-3">
