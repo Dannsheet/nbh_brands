@@ -1,49 +1,23 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase/client';
 import useCategoriasNavbar from '@/hooks/useCategoriasNavbar';
 import { ShoppingCart, Search, Menu as MenuIcon } from 'lucide-react';
-import { useCart } from '@/context/CartContext'; // 👈 Importamos el contexto del carrito
+import { useCart } from '@/context/CartContext'; // Importamos el contexto del carrito
 
 const NavItem = dynamic(() => import('@/components/nav/NavItem'), { ssr: false });
 const MobileNavPanel = dynamic(() => import('@/components/nav/MobileNavPanel'), { ssr: false });
 const UserMenu = dynamic(() => import('./UserMenu'), { ssr: false });
 
 export default function Navbar() {
-  const [user, setUser] = useState(null);
   const { categorias, isLoading, isError } = useCategoriasNavbar();
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const authSubscription = useRef(null);
 
-  // 👇 Obtenemos la cantidad total de items en el carrito desde el contexto
+  // Obtenemos la cantidad total de items en el carrito desde el contexto
   const { totalCantidad } = useCart();
-
-  useEffect(() => {
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-    };
-
-    getInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
-    authSubscription.current = subscription;
-
-    return () => {
-      if (authSubscription.current) {
-        authSubscription.current.unsubscribe();
-      }
-    };
-  }, []);
 
   const categoriaOrder = ['Colaboraciones', 'Camisetas', 'Pantalones', 'Accesorios'];
   const sortedCategorias = [...categorias].sort((a, b) => {
@@ -91,9 +65,9 @@ export default function Navbar() {
           <button className="hidden sm:inline-block p-1 hover:text-yellow-500" aria-label="Buscar">
             <Search className="w-5 h-5" />
           </button>
-          <UserMenu user={user} />
+          <UserMenu />
 
-          {/* 🔹 Carrito con badge dinámico */}
+          {/* Carrito con badge dinámico */}
           <Link href="/carrito" className="relative" aria-label="Carrito">
             <ShoppingCart className="w-5 h-5 hover:text-yellow-500" />
             {totalCantidad > 0 && (
