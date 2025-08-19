@@ -1,4 +1,4 @@
-// src/app/api/admin/inventario/route.js
+// src/app/api/admin/ordenes/route.js
 import { NextResponse } from 'next/server';
 import createClient from '@/lib/supabase/server';
 import { checkIsAdmin } from '@/lib/admin-auth';
@@ -13,7 +13,7 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
-const ALLOWED_SORT = new Set(['created_at', 'stock', 'color', 'talla']);
+const ALLOWED_SORT = new Set(['fecha', 'total', 'estado']);
 
 export async function GET(req) {
   const supabase = createClient();
@@ -29,22 +29,20 @@ export async function GET(req) {
     const rawLimit = parsePositiveInt(params.get('limit'), DEFAULT_LIMIT);
     const limit = Math.min(rawLimit, MAX_LIMIT);
 
-    const producto_id = params.get('producto_id');
-    const color = params.get('color');
-    const talla = params.get('talla');
+    const usuario_id = params.get('usuario_id');
+    const estado = params.get('estado');
     const sort_by = ALLOWED_SORT.has(params.get('sort_by'))
       ? params.get('sort_by')
-      : 'created_at';
+      : 'fecha';
     const order =
       (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
 
     let query = supabase
-      .from('inventario_productos')
-      .select('id, producto_id, color, talla, stock, created_at', { count: 'exact' });
+      .from('ordenes')
+      .select('id, usuario_id, estado, total, fecha', { count: 'exact' });
 
-    if (producto_id) query = query.eq('producto_id', producto_id);
-    if (color) query = query.ilike('color', `%${color}%`);
-    if (talla) query = query.eq('talla', talla);
+    if (usuario_id) query = query.eq('usuario_id', usuario_id);
+    if (estado) query = query.eq('estado', estado);
 
     query = query.order(sort_by, { ascending: order === 'asc' });
 
@@ -60,8 +58,8 @@ export async function GET(req) {
       { status: 200 }
     );
   } catch (err) {
-    console.error('❌ Error GET /inventario:', err);
-    return NextResponse.json({ error: 'Error al obtener inventario' }, { status: 500 });
+    console.error('❌ Error GET /ordenes:', err);
+    return NextResponse.json({ error: 'Error al obtener órdenes' }, { status: 500 });
   }
 }
 
@@ -74,7 +72,7 @@ export async function POST(req) {
 
     const body = await req.json();
 
-    const required = ['producto_id', 'color', 'talla', 'stock'];
+    const required = ['usuario_id', 'total'];
     for (const k of required) {
       if (!body[k]) {
         return NextResponse.json({ error: `Falta campo obligatorio: ${k}` }, { status: 400 });
@@ -82,24 +80,23 @@ export async function POST(req) {
     }
 
     const payload = {
-      producto_id: body.producto_id,
-      color: body.color,
-      talla: body.talla,
-      stock: Number(body.stock ?? 0)
+      usuario_id: body.usuario_id,
+      estado: body.estado ?? 'pendiente',
+      total: Number(body.total)
     };
 
     const { data, error } = await supabase
-      .from('inventario_productos')
+      .from('ordenes')
       .insert([payload])
       .select()
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json({ message: 'Inventario agregado', data }, { status: 201 });
+    return NextResponse.json({ message: 'Orden creada', data }, { status: 201 });
   } catch (err) {
-    console.error('❌ Error POST /inventario:', err);
-    return NextResponse.json({ error: 'Error al crear inventario' }, { status: 500 });
+    console.error('❌ Error POST /ordenes:', err);
+    return NextResponse.json({ error: 'Error al crear orden' }, { status: 500 });
   }
 }
 
@@ -114,15 +111,15 @@ export async function PATCH(req) {
     const { id, ...rest } = body;
     if (!id) return NextResponse.json({ error: 'ID es obligatorio' }, { status: 400 });
 
-    const allowed = ['color', 'talla', 'stock'];
+    const allowed = ['estado', 'total'];
     const payload = Object.fromEntries(
       Object.entries(rest).filter(([k]) => allowed.includes(k))
     );
 
-    if ('stock' in payload) payload.stock = Number(payload.stock);
+    if ('total' in payload) payload.total = Number(payload.total);
 
     const { data, error } = await supabase
-      .from('inventario_productos')
+      .from('ordenes')
       .update(payload)
       .eq('id', id)
       .select()
@@ -130,10 +127,10 @@ export async function PATCH(req) {
 
     if (error) throw error;
 
-    return NextResponse.json({ message: 'Inventario actualizado', data }, { status: 200 });
+    return NextResponse.json({ message: 'Orden actualizada', data }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error PATCH /inventario:', err);
-    return NextResponse.json({ error: 'Error al actualizar inventario' }, { status: 500 });
+    console.error('❌ Error PATCH /ordenes:', err);
+    return NextResponse.json({ error: 'Error al actualizar orden' }, { status: 500 });
   }
 }
 
@@ -148,12 +145,12 @@ export async function DELETE(req) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID es obligatorio' }, { status: 400 });
 
-    const { error } = await supabase.from('inventario_productos').delete().eq('id', id);
+    const { error } = await supabase.from('ordenes').delete().eq('id', id);
     if (error) throw error;
 
-    return NextResponse.json({ message: 'Inventario eliminado' }, { status: 200 });
+    return NextResponse.json({ message: 'Orden eliminada' }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error DELETE /inventario:', err);
-    return NextResponse.json({ error: 'Error al eliminar inventario' }, { status: 500 });
+    console.error('❌ Error DELETE /ordenes:', err);
+    return NextResponse.json({ error: 'Error al eliminar orden' }, { status: 500 });
   }
 }
