@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
-import useCategoriasNavbar from '@/hooks/useCategoriasNavbar';
 import { ShoppingCart, Search, Menu as MenuIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext'; // Importamos el contexto del carrito
 
@@ -12,8 +11,7 @@ const NavItem = dynamic(() => import('@/components/nav/NavItem'), { ssr: false }
 const MobileNavPanel = dynamic(() => import('@/components/nav/MobileNavPanel'), { ssr: false });
 const UserMenu = dynamic(() => import('./UserMenu'), { ssr: false });
 
-export default function Navbar() {
-  const { categorias, isLoading, isError } = useCategoriasNavbar();
+export default function Navbar({ categorias = [] }) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Obtenemos la cantidad total de items en el carrito desde el contexto
@@ -54,8 +52,6 @@ export default function Navbar() {
           {sortedCategorias.map((cat) => (
             <NavItem key={cat.id} cat={cat} />
           ))}
-          {(isLoading && !categorias) && <span className="text-gray-500 text-sm">Cargando...</span>}
-          {isError && <span className="text-red-500 text-sm">Error al cargar categorías</span>}
         </nav>
 
         {/* Iconos lado derecho */}

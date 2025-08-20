@@ -1,15 +1,19 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
+import { headers } from 'next/headers';
 import Navbar from './Navbar';
+import { fetchCategoriasConSubcategorias } from '@/lib/supabase/categories';
 
-export default function ConditionalNavbar() {
-  const pathname = usePathname();
+export const revalidate = 60; // Cache for 60 seconds
+
+export default async function ConditionalNavbar() {
+  const headersList = headers();
+  const pathname = headersList.get('next-url') || '';
   const isAdminRoute = pathname.startsWith('/admin');
 
   if (isAdminRoute) {
     return null;
   }
 
-  return <Navbar />;
+  const categorias = await fetchCategoriasConSubcategorias();
+
+  return <Navbar categorias={categorias} />;
 }

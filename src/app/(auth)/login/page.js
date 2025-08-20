@@ -70,7 +70,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-[calc(100vh-60px)] items-center justify-center">
       <div className="w-full max-w-sm space-y-4">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="text-center mb-8">
