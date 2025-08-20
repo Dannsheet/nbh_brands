@@ -27,7 +27,10 @@ export default function Navbar({ categorias = [] }) {
   });
 
   return (
-    <header className="global-navbar sticky top-0 z-50 w-full bg-black text-white border-b border-yellow-500">
+    <header 
+      className="global-navbar sticky top-0 z-50 w-full bg-black text-white border-b border-yellow-500"
+      style={{ "--navbar-height": "60px" }}
+    >
       <div className="mx-auto max-w-7xl flex items-center justify-between px-4 h-[60px]">
         
         {/* Logo */}

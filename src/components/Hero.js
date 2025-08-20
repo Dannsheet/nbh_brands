@@ -49,7 +49,11 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full h-[70vh] md:h-[75vh] overflow-hidden bg-primary text-accent">
+    <section 
+      className="relative w-full overflow-hidden snap-start"
+      style={{ minHeight: "calc(100vh - var(--navbar-height))" }}
+      aria-label="Hero"
+    >
       {slides.map((s, i) => (
         <picture
           key={i}

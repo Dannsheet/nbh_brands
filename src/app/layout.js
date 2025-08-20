@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
         {/* 👇 envolvemos la app */}
         <CartProvider>
           <ConditionalNavbar />
-          <main>
+          <main style={{ scrollSnapType: "y mandatory", WebkitOverflowScrolling: "touch" }}>
             {children}
           </main>
           <Footer />
