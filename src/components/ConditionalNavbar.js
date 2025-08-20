@@ -1,19 +1,28 @@
-import { headers } from 'next/headers';
+'use client';
+
+import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
-import { fetchCategoriasConSubcategorias } from '@/lib/supabase/categories';
+import useCategoriasNavbar from '@/hooks/useCategoriasNavbar';
 
-export const revalidate = 60; // Cache for 60 seconds
+const adminPaths = ['/admin', '/login', '/registro'];
 
-export default async function ConditionalNavbar() {
-  const headersList = headers();
-  const pathname = headersList.get('next-url') || '';
-  const isAdminRoute = pathname.startsWith('/admin');
+export default function ConditionalNavbar() {
+  const pathname = usePathname();
+  const { categorias, isLoading, isError } = useCategoriasNavbar();
 
-  if (isAdminRoute) {
+  if (adminPaths.includes(pathname) || pathname.startsWith('/admin/')) {
     return null;
   }
 
-  const categorias = await fetchCategoriasConSubcategorias();
+  if (isLoading) {
+    // Puedes mostrar un skeleton/loader aquí si lo deseas
+    return <div className="h-[60px] bg-black"></div>;
+  }
+
+  if (isError) {
+    // Manejo de error
+    return <div className="h-[60px] bg-black text-white flex items-center justify-center">Error al cargar menú</div>;
+  }
 
   return <Navbar categorias={categorias} />;
 }

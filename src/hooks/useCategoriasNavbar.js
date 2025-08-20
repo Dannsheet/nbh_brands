@@ -16,31 +16,22 @@ export default function useCategoriasNavbar() {
   const categorias = useMemo(() => {
     if (!data) return [];
 
-    // Deduplicación recursiva por id
-    const dedup = (items) => {
-      const seen = new Set();
-      return (items || []).filter((item) => {
-        if (seen.has(item.id)) return false;
-        seen.add(item.id);
-        if (item.children?.length) {
-          item.children = dedup(item.children);
-        }
-        return true;
-      });
-    };
+    // The new API already returns clean, hierarchical data.
+    // We just need to ensure subcategorias is always an array and sort them.
+    const processedData = data.map(cat => ({
+      ...cat,
+      subcategorias: cat.subcategorias || [],
+    }));
 
-    const resultado = dedup(structuredClone(data));
+    // Sort subcategories for 'Pantalones'
+    const pantalones = processedData.find(cat => cat.slug === 'pantalones');
+    if (pantalones && pantalones.subcategorias.length > 0) {
+      pantalones.subcategorias.sort(
+        (a, b) => ORDER_PANTS.indexOf(a.nombre) - ORDER_PANTS.indexOf(b.nombre)
+      );
+    }
 
-    // Ordenar subcategorías de pantalones
-    resultado.forEach((cat) => {
-      if (cat.slug === 'pantalones' && Array.isArray(cat.children)) {
-        cat.children.sort(
-          (a, b) => ORDER_PANTS.indexOf(a.nombre) - ORDER_PANTS.indexOf(b.nombre)
-        );
-      }
-    });
-
-    return resultado;
+    return processedData;
   }, [data]);
 
   return {
