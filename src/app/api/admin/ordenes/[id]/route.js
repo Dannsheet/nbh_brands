@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase/server';
-import { checkIsAdmin } from '@/lib/utils/admin';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { checkIsAdmin } from '@/lib/admin-auth';
 
 // GET: Obtener detalles de una orden específica
 export async function GET(request, { params }) {
-  if (!await checkIsAdmin(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = params;
-
-  if (!id) {
-    return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
-  }
-
   try {
-    const { data, error } = await supabase
+    const auth = await checkIsAdmin(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
+
+    const { id } = params;
+    if (!id) {
+      return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseAdmin
       .from('ordenes')
       .select(`
         id,
@@ -39,30 +39,32 @@ export async function GET(request, { params }) {
       if (error.code === 'PGRST116') { // Not found
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
-      throw error;
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ data });
 
-  } catch (error) {
+  } catch (err) {
+    console.error('Unexpected Error GET /ordenes/[id]:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
 // PUT: Actualizar estado de una orden (verificar/rechazar pago)
 export async function PUT(request, { params }) {
-  if (!await checkIsAdmin(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { id } = params;
-  const { action, comprobanteId } = await request.json();
-
-  if (!id || !action || !comprobanteId) {
-    return NextResponse.json({ error: 'Order ID, action, and comprobanteId are required' }, { status: 400 });
-  }
-
   try {
+    const auth = await checkIsAdmin(request);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
+
+    const { id } = params;
+    const { action, comprobanteId } = await request.json();
+
+    if (!id || !action || !comprobanteId) {
+      return NextResponse.json({ error: 'Order ID, action, and comprobanteId are required' }, { status: 400 });
+    }
+
     let rpcName;
     if (action === 'verify') {
       rpcName = 'verificar_pago_y_actualizar_stock';
@@ -72,23 +74,23 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    const { error } = await supabase.rpc(rpcName, {
+    const { error } = await supabaseAdmin.rpc(rpcName, {
       p_orden_id: id,
       p_comprobante_id: comprobanteId,
     });
 
     if (error) {
       console.error(`Error executing ${rpcName}:`, error);
-      // The DB function can raise exceptions, e.g., for insufficient stock
       if (error.message.includes('insufficient stock')) {
         return NextResponse.json({ error: 'Stock insuficiente para completar la orden.' }, { status: 409 }); // Conflict
       }
-      throw error;
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ message: `Order ${action} processed successfully.` });
 
-  } catch (error) {
+  } catch (err) {
+    console.error(`Unexpected Error PUT /ordenes/[id]:`, err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

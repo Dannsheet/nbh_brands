@@ -1,6 +1,6 @@
 // src/app/api/admin/inventario/route.js
 import { NextResponse } from 'next/server';
-import createClient from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { checkIsAdmin } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -13,16 +13,12 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
-const ALLOWED_SORT = new Set(['created_at', 'stock', 'color', 'talla', 'producto_nombre']);
-
-// ✅ GET con ordenamiento múltiple
+// GET con ordenamiento múltiple y paginación
 export async function GET(req) {
-  const supabase = createClient();
-
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok) {
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
 
     const url = new URL(req.url);
@@ -31,11 +27,10 @@ export async function GET(req) {
     const page = parsePositiveInt(params.get('page'), 1);
     const rawLimit = parsePositiveInt(params.get('limit'), DEFAULT_LIMIT);
     const limit = Math.min(rawLimit, MAX_LIMIT);
-
     const order = (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
     const sortByParam = params.get('sort_by');
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('inventario_productos')
       .select(`
         id, stock, color, talla, created_at,
@@ -53,7 +48,6 @@ export async function GET(req) {
         }
       });
     } else {
-      // Default sort order
       query = query.order('created_at', { ascending: false });
     }
 
@@ -63,7 +57,10 @@ export async function GET(req) {
 
     const { data, error, count } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error GET /inventario:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json(
       { data, meta: { total: count ?? 0, page, limit, from, to } },
@@ -71,18 +68,18 @@ export async function GET(req) {
     );
 
   } catch (err) {
-    console.error('❌ Error GET /inventario:', err);
-    return NextResponse.json({ error: 'Error al obtener inventario' }, { status: 500 });
+    console.error('Unexpected Error GET /inventario:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
-// ✅ POST (igual que lo tenías)
+// POST para crear un nuevo item de inventario
 export async function POST(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const body = await req.json();
 
@@ -100,28 +97,32 @@ export async function POST(req) {
       stock: Number(body.stock ?? 0)
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('inventario_productos')
       .insert([payload])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error POST /inventario:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Inventario agregado', data }, { status: 201 });
+
   } catch (err) {
-    console.error('❌ Error POST /inventario:', err);
-    return NextResponse.json({ error: 'Error al crear inventario' }, { status: 500 });
+    console.error('Unexpected Error POST /inventario:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
-// ✅ PATCH (igual que lo tenías)
+// PATCH para actualizar un item de inventario
 export async function PATCH(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const body = await req.json();
     const { id, ...rest } = body;
@@ -134,40 +135,49 @@ export async function PATCH(req) {
 
     if ('stock' in payload) payload.stock = Number(payload.stock);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('inventario_productos')
       .update(payload)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error PATCH /inventario:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Inventario actualizado', data }, { status: 200 });
+
   } catch (err) {
-    console.error('❌ Error PATCH /inventario:', err);
-    return NextResponse.json({ error: 'Error al actualizar inventario' }, { status: 500 });
+    console.error('Unexpected Error PATCH /inventario:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
-// ✅ DELETE (igual que lo tenías)
+// DELETE para eliminar un item de inventario
 export async function DELETE(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID es obligatorio' }, { status: 400 });
 
-    const { error } = await supabase.from('inventario_productos').delete().eq('id', id);
-    if (error) throw error;
+    const { error } = await supabaseAdmin.from('inventario_productos').delete().eq('id', id);
+    
+    if (error) {
+      console.error('Error DELETE /inventario:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Inventario eliminado' }, { status: 200 });
+
   } catch (err) {
-    console.error('❌ Error DELETE /inventario:', err);
-    return NextResponse.json({ error: 'Error al eliminar inventario' }, { status: 500 });
+    console.error('Unexpected Error DELETE /inventario:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

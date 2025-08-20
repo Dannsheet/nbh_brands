@@ -1,6 +1,6 @@
 // src/app/api/admin/ordenes/route.js
 import { NextResponse } from 'next/server';
-import createClient from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { checkIsAdmin } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -16,11 +16,11 @@ function parsePositiveInt(value, fallback) {
 const ALLOWED_SORT = new Set(['fecha', 'total', 'estado', 'usuarios.nombre', 'usuarios.email']);
 
 export async function GET(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const url = new URL(req.url);
     const params = url.searchParams;
@@ -34,7 +34,7 @@ export async function GET(req) {
     const order = (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
     const sortByParam = params.get('sort_by');
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('ordenes')
       .select('id, usuario_id, estado, total, fecha, usuario:usuarios(nombre, email)', { count: 'exact' });
 
@@ -60,24 +60,27 @@ export async function GET(req) {
     query = query.range(from, to);
 
     const { data, error, count } = await query;
-    if (error) throw error;
+    if (error) {
+      console.error('Error GET /ordenes:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json(
       { data, meta: { total: count ?? data.length, page, limit, from, to } },
       { status: 200 }
     );
   } catch (err) {
-    console.error('❌ Error GET /ordenes:', err);
-    return NextResponse.json({ error: 'Error al obtener órdenes' }, { status: 500 });
+    console.error('Unexpected Error GET /ordenes:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 export async function POST(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const body = await req.json();
 
@@ -94,27 +97,30 @@ export async function POST(req) {
       total: Number(body.total)
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ordenes')
       .insert([payload])
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error POST /ordenes:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Orden creada', data }, { status: 201 });
   } catch (err) {
-    console.error('❌ Error POST /ordenes:', err);
-    return NextResponse.json({ error: 'Error al crear orden' }, { status: 500 });
+    console.error('Unexpected Error POST /ordenes:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 export async function PATCH(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const body = await req.json();
     const { id, ...rest } = body;
@@ -127,39 +133,46 @@ export async function PATCH(req) {
 
     if ('total' in payload) payload.total = Number(payload.total);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('ordenes')
       .update(payload)
       .eq('id', id)
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error PATCH /ordenes:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Orden actualizada', data }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error PATCH /ordenes:', err);
-    return NextResponse.json({ error: 'Error al actualizar orden' }, { status: 500 });
+    console.error('Unexpected Error PATCH /ordenes:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
 export async function DELETE(req) {
-  const supabase = createClient();
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok)
-      return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
+    }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID es obligatorio' }, { status: 400 });
 
-    const { error } = await supabase.from('ordenes').delete().eq('id', id);
-    if (error) throw error;
+    const { error } = await supabaseAdmin.from('ordenes').delete().eq('id', id);
+    
+    if (error) {
+      console.error('Error DELETE /ordenes:', error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Orden eliminada' }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error DELETE /ordenes:', err);
-    return NextResponse.json({ error: 'Error al eliminar orden' }, { status: 500 });
+    console.error('Unexpected Error DELETE /ordenes:', err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

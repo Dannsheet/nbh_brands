@@ -1,6 +1,5 @@
-// src/app/api/admin/productos/[id]/route.js
 import { NextResponse } from 'next/server';
-import createClient from '@/lib/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import { checkIsAdmin } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
@@ -17,28 +16,29 @@ const BASE_SELECT = `
  * GET: Obtener un producto específico
  */
 export async function GET(req, { params }) {
-  const supabase = createClient();
   const { id } = params;
-
-  if (!id) return NextResponse.json({ error: 'Falta ID' }, { status: 400 });
+  if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok) return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('productos')
       .select(BASE_SELECT)
       .eq('id', id)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.error(`Error GET /productos/${id}:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
     if (!data) return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 });
 
     return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error GET /productos/[id]:', err);
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 });
+    console.error(`Unexpected Error GET /productos/${id}:`, err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -46,14 +46,12 @@ export async function GET(req, { params }) {
  * PATCH: Actualizar un producto específico
  */
 export async function PATCH(req, { params }) {
-  const supabase = createClient();
   const { id } = params;
-
-  if (!id) return NextResponse.json({ error: 'Falta ID' }, { status: 400 });
+  if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok) return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const body = await req.json();
 
@@ -71,19 +69,22 @@ export async function PATCH(req, { params }) {
 
     if ('precio' in payload) payload.precio = Number(payload.precio);
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('productos')
       .update(payload)
       .eq('id', id)
       .select(BASE_SELECT)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error(`Error PATCH /productos/${id}:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Producto actualizado', data }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error PATCH /productos/[id]:', err);
-    return NextResponse.json({ error: 'Error al actualizar producto' }, { status: 500 });
+    console.error(`Unexpected Error PATCH /productos/${id}:`, err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
 
@@ -91,21 +92,22 @@ export async function PATCH(req, { params }) {
  * DELETE: Eliminar un producto específico
  */
 export async function DELETE(req, { params }) {
-  const supabase = createClient();
   const { id } = params;
-
-  if (!id) return NextResponse.json({ error: 'Falta ID' }, { status: 400 });
+  if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const check = await checkIsAdmin(req);
-    if (!check.ok) return NextResponse.json({ error: check.message }, { status: check.status });
+    const auth = await checkIsAdmin(req);
+    if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
-    const { error } = await supabase.from('productos').delete().eq('id', id);
-    if (error) throw error;
+    const { error } = await supabaseAdmin.from('productos').delete().eq('id', id);
+    if (error) {
+      console.error(`Error DELETE /productos/${id}:`, error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ message: 'Producto eliminado' }, { status: 200 });
   } catch (err) {
-    console.error('❌ Error DELETE /productos/[id]:', err);
-    return NextResponse.json({ error: 'Error al eliminar producto' }, { status: 500 });
+    console.error(`Unexpected Error DELETE /productos/${id}:`, err);
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }
