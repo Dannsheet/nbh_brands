@@ -15,7 +15,7 @@ function parsePositiveInt(value, fallback) {
 
 const ALLOWED_SORT = new Set(['created_at', 'stock', 'color', 'talla', 'producto_nombre']);
 
-// ✅ NUEVO GET usando RPC
+// ✅ GET con ordenamiento múltiple
 export async function GET(req) {
   const supabase = createClient();
 
@@ -32,22 +32,41 @@ export async function GET(req) {
     const rawLimit = parsePositiveInt(params.get('limit'), DEFAULT_LIMIT);
     const limit = Math.min(rawLimit, MAX_LIMIT);
 
-    const sort_by = ALLOWED_SORT.has(params.get('sort_by'))
-      ? params.get('sort_by')
-      : 'producto_nombre';
-    const order = (params.get('order') || 'asc').toLowerCase();
+    const order = (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const sortByParam = params.get('sort_by');
 
-    const { data, error } = await supabase.rpc('admin_get_inventario', {
-      p_page: page,
-      p_limit: limit,
-      p_sort_by: sort_by,
-      p_order: order,
-    });
+    let query = supabase
+      .from('inventario_productos')
+      .select(`
+        id, stock, color, talla, created_at,
+        producto:productos (id, nombre)
+      `, { count: 'exact' });
+
+    if (sortByParam) {
+      const sortFields = sortByParam.split(',');
+      sortFields.forEach(field => {
+        const [relatedTable, relatedField] = field.includes('.') ? field.split('.') : [null, field];
+        if (relatedTable) {
+          query = query.order(relatedField, { ascending: order === 'asc', foreignTable: relatedTable });
+        } else {
+          query = query.order(field, { ascending: order === 'asc' });
+        }
+      });
+    } else {
+      // Default sort order
+      query = query.order('created_at', { ascending: false });
+    }
+
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
 
     if (error) throw error;
 
     return NextResponse.json(
-      { data, meta: { page, limit, sort_by, order } },
+      { data, meta: { total: count ?? 0, page, limit, from, to } },
       { status: 200 }
     );
 
