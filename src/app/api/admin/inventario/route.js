@@ -13,14 +13,17 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
-const ALLOWED_SORT = new Set(['created_at', 'stock', 'color', 'talla']);
+const ALLOWED_SORT = new Set(['created_at', 'stock', 'color', 'talla', 'producto_nombre']);
 
+// ✅ NUEVO GET usando RPC
 export async function GET(req) {
   const supabase = createClient();
+
   try {
     const check = await checkIsAdmin(req);
-    if (!check.ok)
+    if (!check.ok) {
       return NextResponse.json({ error: check.message }, { status: check.status });
+    }
 
     const url = new URL(req.url);
     const params = url.searchParams;
@@ -29,42 +32,32 @@ export async function GET(req) {
     const rawLimit = parsePositiveInt(params.get('limit'), DEFAULT_LIMIT);
     const limit = Math.min(rawLimit, MAX_LIMIT);
 
-    const producto_id = params.get('producto_id');
-    const color = params.get('color');
-    const talla = params.get('talla');
     const sort_by = ALLOWED_SORT.has(params.get('sort_by'))
       ? params.get('sort_by')
-      : 'created_at';
-    const order =
-      (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+      : 'producto_nombre';
+    const order = (params.get('order') || 'asc').toLowerCase();
 
-    let query = supabase
-      .from('inventario_productos')
-      .select('id, producto_id, color, talla, stock, created_at', { count: 'exact' });
+    const { data, error } = await supabase.rpc('admin_get_inventario', {
+      p_page: page,
+      p_limit: limit,
+      p_sort_by: sort_by,
+      p_order: order,
+    });
 
-    if (producto_id) query = query.eq('producto_id', producto_id);
-    if (color) query = query.ilike('color', `%${color}%`);
-    if (talla) query = query.eq('talla', talla);
-
-    query = query.order(sort_by, { ascending: order === 'asc' });
-
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-    query = query.range(from, to);
-
-    const { data, error, count } = await query;
     if (error) throw error;
 
     return NextResponse.json(
-      { data, meta: { total: count ?? data.length, page, limit, from, to } },
+      { data, meta: { page, limit, sort_by, order } },
       { status: 200 }
     );
+
   } catch (err) {
     console.error('❌ Error GET /inventario:', err);
     return NextResponse.json({ error: 'Error al obtener inventario' }, { status: 500 });
   }
 }
 
+// ✅ POST (igual que lo tenías)
 export async function POST(req) {
   const supabase = createClient();
   try {
@@ -103,6 +96,7 @@ export async function POST(req) {
   }
 }
 
+// ✅ PATCH (igual que lo tenías)
 export async function PATCH(req) {
   const supabase = createClient();
   try {
@@ -137,6 +131,7 @@ export async function PATCH(req) {
   }
 }
 
+// ✅ DELETE (igual que lo tenías)
 export async function DELETE(req) {
   const supabase = createClient();
   try {
