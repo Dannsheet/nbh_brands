@@ -54,7 +54,7 @@ export default function Hero() {
         <picture
           key={i}
           onClick={handleClick}
-          className={`absolute top-0 left-0 w-full h-full cursor-pointer transition-opacity duration-1000 ${
+          className={`absolute top-0 left-0 w-full h-full cursor-pointer transition-opacity duration-1000 animate-fadeUp ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -69,31 +69,35 @@ export default function Hero() {
         </picture>
       ))}
 
- {/* OVERLAY CTA - Parte inferior como en BAPE */}
-<div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-10 text-center">
-  <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">
-    NBH STREETWEAR
-  </h2>
-  <button
-    onClick={handleClick}
-    className="mt-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold rounded shadow-md transition"
-  >
-    COMPRAR AHORA
-  </button>
-</div>
+      {/* OVERLAY CTA - Centered content with animations */}
+      <div className="absolute inset-0 flex items-center justify-center z-10">
+        <div className="text-center max-w-3xl px-4">
+          <h2 
+            className="text-4xl md:text-6xl font-extrabold text-white opacity-80 drop-shadow-lg animate-fadeUp animate-delay-100"
+            aria-label="NBH Streetwear"
+          >
+            NBH STREETWEAR
+          </h2>
+          
+          {/* Subtitle with staggered animation - optional */}
+          <p className="mt-4 text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
+            Estilo urbano que define tu actitud
+          </p>
+        </div>
+      </div>
 
       {/* BOTONES DE NAVEGACIÓN */}
       <button
         onClick={goBack}
         aria-label="Imagen anterior"
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20"
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20 animate-fadeUp animate-delay-300"
       >
         <ChevronLeft className="w-5 h-5" aria-hidden="true" />
       </button>
       <button
         onClick={goNext}
         aria-label="Imagen siguiente"
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20"
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20 animate-fadeUp animate-delay-300"
       >
         <ChevronRight className="w-5 h-5" aria-hidden="true" />
       </button>
