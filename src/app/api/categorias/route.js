@@ -6,33 +6,30 @@ export const revalidate = 60; // cache 60s
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin.rpc("exec", {
-      query: `
-        SELECT
-          c.id,
-          c.nombre,
-          c.slug,
-          COALESCE(
-            json_agg(
-              json_build_object(
-                'id', sc.id,
-                'nombre', sc.nombre,
-                'slug', sc.slug
-              )
-            ) FILTER (WHERE sc.id IS NOT NULL),
-            '[]'
-          ) AS subcategorias
-        FROM categorias c
-        LEFT JOIN categorias sc ON sc.parent_id = c.id
-        WHERE c.parent_id IS NULL -- solo categorías principales
-        GROUP BY c.id, c.nombre, c.slug
-        ORDER BY c.nombre;
-      `,
-    });
+    const { data, error } = await supabaseAdmin
+      .from("categorias")
+      .select(`
+        id,
+        nombre,
+        slug,
+        subcategorias:categorias!parent_id (
+          id,
+          nombre,
+          slug
+        )
+      `)
+      .is("parent_id", null) // solo categorías principales
+      .order("nombre", { ascending: true });
 
     if (error) throw error;
 
-    return NextResponse.json(data);
+    // asegurar que siempre devuelva array en subcategorias
+    const result = data.map((cat) => ({
+      ...cat,
+      subcategorias: cat.subcategorias || [],
+    }));
+
+    return NextResponse.json(result);
   } catch (err) {
     console.error("Error en /api/categorias:", err.message);
     return NextResponse.json(
