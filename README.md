@@ -30,6 +30,14 @@ To ensure a good user experience and for SEO purposes, common English-language e
 
 This convention is enforced via redirects in `next.config.mjs`. Please adhere to this pattern when creating new pages.
 
+## UI and Styling Conventions
+
+### Navbar-Hero Gap
+
+To ensure the sticky navbar does not obscure content, a global top padding is applied to the `<main>` element in `src/app/layout.js`. This can create a visual gap on pages where a component should appear directly beneath the navbar, such as the homepage hero.
+
+To resolve this, a negative top margin (e.g., `-mt-16 sm:-mt-20`) is applied to the specific component that needs to close the gap. This counteracts the global padding locally without affecting other pages. An example of this fix can be found in `src/components/Hero.js`.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
