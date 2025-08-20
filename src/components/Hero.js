@@ -49,7 +49,7 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden bg-primary text-accent -mt-16 sm:-mt-20">
+    <section className="relative w-full min-h-screen overflow-hidden bg-primary text-accent">
       {slides.map((s, i) => (
         <picture
           key={i}

@@ -100,8 +100,8 @@ export default function RegistroPage() {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center -mt-16 sm:-mt-20 px-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-sm space-y-4">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-yellow-400 mb-2">CREA TU CUENTA</h1>
@@ -226,6 +226,6 @@ export default function RegistroPage() {
           )}
         </form>
       </div>
-    </section>
+    </div>
   );
 }

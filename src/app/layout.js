@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
         {/* 👇 envolvemos la app */}
         <CartProvider>
           <ConditionalNavbar />
-          <main className="pt-16 sm:pt-20">
+          <main>
             {children}
           </main>
           <Footer />
