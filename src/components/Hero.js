@@ -91,7 +91,7 @@ export default function Hero() {
           </h1>
 
           <p className="mt-3 text-xs sm:text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
-            Estilo urbano que define tu actitud
+            Estilo urbano que te define
           </p>
         </div>
       </div>
