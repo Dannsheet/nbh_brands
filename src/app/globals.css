@@ -1,3 +1,15 @@
+html, body, #__next {
+  height: 100%;
+}
+
+:root {
+  --navbar-height: 60px;
+}
+
+@media (max-width: 768px) {
+  :root { --navbar-height: 56px; }
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

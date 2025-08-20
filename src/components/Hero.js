@@ -51,7 +51,10 @@ export default function Hero() {
   return (
     <section 
       className="relative w-full overflow-hidden snap-start"
-      style={{ minHeight: "calc(100vh - var(--navbar-height))" }}
+      style={{
+        height: 'calc(100vh - var(--navbar-height))',
+        minHeight: 'calc(100vh - var(--navbar-height))',
+      }}
       aria-label="Hero"
     >
       {slides.map((s, i) => (
