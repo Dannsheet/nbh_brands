@@ -2,23 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // 👈 Import Link
 import { supabase } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
   const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
@@ -27,7 +21,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // 1) Intentar login
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
@@ -49,16 +42,12 @@ export default function LoginPage() {
         return;
       }
 
-      // 2) Sincronizar sesión con tu backend para cookies/middleware
       await fetch('/api/auth/callback', {
         method: 'POST',
         body: JSON.stringify({ event: 'SIGNED_IN', session: data.session }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      // 3) Redirigir
       router.push('/');
       router.refresh();
     } catch (err) {
@@ -85,39 +74,21 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-4">
-            <input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="Correo electrónico"
-              value={formData.email}
-              onChange={handleChange}
-              disabled={loading}
-              required
-              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-            />
+            <input {...{
+              id:"email", name:"email", type:"email", placeholder:"Correo electrónico",
+              value:formData.email, onChange:handleChange, disabled:loading, required:true,
+              className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+            }} />
 
-            <input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Contraseña"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-              required
-              className="w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-            />
+            <input {...{
+              id:"password", name:"password", type:"password", placeholder:"Contraseña",
+              value:formData.password, onChange:handleChange, disabled:loading, required:true,
+              className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
+            }} />
           </div>
 
           <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${
-                loading ? 'opacity-80 cursor-not-allowed' : ''
-              }`}
-            >
+            <button type="submit" disabled={loading} className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${loading ? 'opacity-80 cursor-not-allowed' : ''}`}>
               {loading ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -131,10 +102,11 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center text-sm text-gray-400">
-            <p>¿No tienes una cuenta?{' '}
-              <a href="/registro" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
+            <p>
+              ¿No tienes una cuenta?{' '}
+              <Link href="/registro" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
                 Regístrate
-              </a>
+              </Link>
             </p>
           </div>
         </form>
