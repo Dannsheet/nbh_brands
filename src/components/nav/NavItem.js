@@ -3,16 +3,13 @@
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 
-// Helper to generate URL-friendly slugs
-const slugify = (text) => text.toLowerCase().replace(/\s+/g, '-');
-
 export default function NavItem({ cat }) {
   const hasSubcategorias = cat.subcategorias && cat.subcategorias.length > 0;
 
   return (
     <div className="relative group">
       <Link
-        href={`/productos/categoria/${slugify(cat.nombre)}`}
+        href={`/productos/categoria/${cat.slug}`}
         className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200"
         aria-expanded={hasSubcategorias ? 'true' : 'false'}
         aria-haspopup={hasSubcategorias}
@@ -27,7 +24,7 @@ export default function NavItem({ cat }) {
             {cat.subcategorias.map((subcat) => (
               <li key={subcat.id}>
                 <Link
-                  href={`/productos/subcategoria/${slugify(subcat.nombre)}`}
+                  href={`/productos/categoria/${cat.slug}/${subcat.slug}`}
                   className="block px-4 py-2 text-sm hover:bg-yellow-500 hover:text-black transition-colors duration-200"
                 >
                   {subcat.nombre}

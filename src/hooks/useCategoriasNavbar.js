@@ -1,42 +1,23 @@
 // src/hooks/useCategoriasNavbar.js
 'use client';
-
 import { useMemo } from 'react';
 import useSWR from 'swr';
-import { fetcher } from '@/lib/fetcher'; // ✅ reutilizamos tu fetcher centralizado
+import { fetcher } from '@/lib/fetcher';
 
-// Orden fijo para las subcategorías de “Pantalones”
-const ORDER_PANTS = ['BERMUDAS', 'Jeans Cargo', 'Parachute', 'Jeans clasicos'];
+const ORDER_PANTS = ['Jeans Cargo', 'Jeans Clásicos', 'Parachutes'];
 
 export default function useCategoriasNavbar() {
-  const { data, error, isLoading } = useSWR('/api/categorias', fetcher, {
-    revalidateOnFocus: false,
-    shouldRetryOnError: false, // 👈 evita loops si el endpoint falla
-  });
+  const { data, error, isLoading } = useSWR('/api/categorias', fetcher, { revalidateOnFocus: false });
 
   const categorias = useMemo(() => {
     if (!data) return [];
-
-    // Nos aseguramos de que siempre venga un array de subcategorias
-    const processedData = data.map(cat => ({
-      ...cat,
-      subcategorias: Array.isArray(cat.subcategorias) ? cat.subcategorias : [],
-    }));
-
-    // Ordenar solo si existe "Pantalones"
-    const pantalones = processedData.find(cat => cat.slug === 'pantalones');
-    if (pantalones && pantalones.subcategorias.length > 0) {
-      pantalones.subcategorias.sort(
-        (a, b) => ORDER_PANTS.indexOf(a.nombre) - ORDER_PANTS.indexOf(b.nombre)
-      );
+    const processed = data.map(cat => ({ ...cat, subcategorias: cat.subcategorias || [] }));
+    const pantalones = processed.find(c => c.slug === 'pantalones');
+    if (pantalones) {
+      pantalones.subcategorias.sort((a,b) => ORDER_PANTS.indexOf(a.nombre) - ORDER_PANTS.indexOf(b.nombre));
     }
-
-    return processedData;
+    return processed;
   }, [data]);
 
-  return {
-    categorias,
-    isLoading,
-    isError: !!error,
-  };
+  return { categorias, isLoading, isError: !!error };
 }

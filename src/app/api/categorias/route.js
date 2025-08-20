@@ -7,7 +7,7 @@ export const revalidate = 60; // cache 60s
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
-      .from("categorias")
+      .from('categorias')
       .select(`
         id,
         nombre,
@@ -18,23 +18,19 @@ export async function GET() {
           slug
         )
       `)
-      .is("parent_id", null) // solo categorías principales
-      .order("nombre", { ascending: true });
+      .is('parent_id', null)
+      .order('nombre', { ascending: true });
 
     if (error) throw error;
 
-    // asegurar que siempre devuelva array en subcategorias
-    const result = data.map((cat) => ({
+    const result = (data || []).map(cat => ({
       ...cat,
-      subcategorias: cat.subcategorias || [],
+      subcategorias: cat.subcategorias || []
     }));
 
     return NextResponse.json(result);
   } catch (err) {
-    console.error("Error en /api/categorias:", err.message);
-    return NextResponse.json(
-      { error: "Error al obtener categorías" },
-      { status: 500 }
-    );
+    console.error("Error en /api/categorias:", err);
+    return NextResponse.json({ error: "Error al obtener categorías" }, { status: 500 });
   }
 }
