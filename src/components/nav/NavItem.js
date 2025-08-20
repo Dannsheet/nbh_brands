@@ -1,52 +1,41 @@
 'use client';
 
-import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 
+// Helper to generate URL-friendly slugs
+const slugify = (text) => text.toLowerCase().replace(/\s+/g, '-');
+
 export default function NavItem({ cat }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef(null);
-
-  const handleMouseEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 150);
-  };
+  const hasSubcategorias = cat.subcategorias && cat.subcategorias.length > 0;
 
   return (
-    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div className="relative group">
       <Link
-        href={`/productos/categoria/${cat.slug}`}
-        className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400"
-        aria-expanded={isOpen}
-        aria-haspopup={!!cat.children?.length}
+        href={`/productos/categoria/${slugify(cat.nombre)}`}
+        className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200"
+        aria-expanded={hasSubcategorias ? 'true' : 'false'}
+        aria-haspopup={hasSubcategorias}
       >
         {cat.nombre}
-        {cat.children?.length > 0 && <ChevronDown size={16} />}
+        {hasSubcategorias && <ChevronDown size={16} className="transition-transform duration-200 group-hover:rotate-180" />}
       </Link>
-      {isOpen && cat.children?.length > 0 && (
-        <ul className="absolute left-0 top-full z-50 mt-1 w-44 rounded-md bg-black py-1 text-white shadow-lg border border-gray-700">
-          {(cat.nombre === 'Pantalones'
-            ? [...cat.children].sort((a, b) => {
-                const order = ['Jeans Cargo', 'Jeans Clásicos', 'Parachutes'];
-                return order.indexOf(a.nombre) - order.indexOf(b.nombre);
-              })
-            : cat.children
-          ).map((subcat) => (
-            <li key={subcat.id}>
-              <Link
-                href={`/productos/categoria/${subcat.slug}`}
-                className="block px-4 py-2 text-sm hover:bg-yellow-500 hover:text-black"
-              >
-                {subcat.nombre}
-              </Link>
-            </li>
-          ))}
-        </ul>
+
+      {hasSubcategorias && (
+        <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2">
+          <ul className="w-48 rounded-md bg-black py-2 text-white shadow-lg border border-gray-800">
+            {cat.subcategorias.map((subcat) => (
+              <li key={subcat.id}>
+                <Link
+                  href={`/productos/subcategoria/${slugify(subcat.nombre)}`}
+                  className="block px-4 py-2 text-sm hover:bg-yellow-500 hover:text-black transition-colors duration-200"
+                >
+                  {subcat.nombre}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
