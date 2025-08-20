@@ -7,8 +7,14 @@ import toast from "react-hot-toast";
 const CartContext = createContext();
 
 const fetcher = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Error al cargar carrito");
+  const res = await fetch(url, { credentials: 'include' });
+  if (!res.ok) {
+    if (res.status === 401) {
+      // Don't throw for 401, as it's a valid state for logged-out users
+      return { items: [] }; 
+    }
+    throw new Error("Error al cargar carrito");
+  }
   return res.json();
 };
 
@@ -30,6 +36,7 @@ export function CartProvider({ children }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ producto_id, producto_nombre, color, talla, cantidad }),
+          credentials: 'include',
         });
 
         if (!res.ok) throw new Error("Error al agregar al carrito");
@@ -62,6 +69,7 @@ export function CartProvider({ children }) {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: itemId }),
+          credentials: 'include',
         });
         toast.success("🗑️ Producto eliminado del carrito");
       } catch (err) {
@@ -91,6 +99,7 @@ export function CartProvider({ children }) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: itemId, cantidad }),
+          credentials: 'include',
         });
 
         toast.success("🔄 Cantidad actualizada");
@@ -108,7 +117,7 @@ export function CartProvider({ children }) {
   const clearCart = useCallback(async () => {
     try {
       mutate({ items: [] }, false);
-      await fetch("/api/carrito/clear", { method: "POST" });
+      await fetch("/api/carrito/clear", { method: "POST", credentials: 'include' });
       toast.success("🧹 Carrito vaciado");
     } catch (err) {
       console.error(err);
