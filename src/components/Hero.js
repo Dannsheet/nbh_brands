@@ -49,12 +49,12 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden bg-primary text-accent">
+    <section className="relative w-full h-[70vh] md:h-[75vh] overflow-hidden bg-primary text-accent">
       {slides.map((s, i) => (
         <picture
           key={i}
           onClick={handleClick}
-          className={`absolute top-0 left-0 w-full h-full cursor-pointer transition-opacity duration-1000 animate-fadeUp ${
+          className={`absolute top-0 left-0 w-full h-full cursor-pointer transition-opacity duration-1000 ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -69,18 +69,21 @@ export default function Hero() {
         </picture>
       ))}
 
-      {/* OVERLAY CTA - Centered content with animations */}
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <div className="text-center max-w-3xl px-4">
-          <h2 
-            className="text-4xl md:text-6xl font-extrabold text-white opacity-80 drop-shadow-lg animate-fadeUp animate-delay-100"
-            aria-label="NBH Streetwear"
+      {/* Overlay oscuro */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Contenido en la parte inferior */}
+      <div className="relative z-10 flex items-end justify-center h-full px-4 pb-12 md:pb-20">
+        <div className="w-full max-w-4xl text-center">
+          <h1
+            className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white opacity-80 animate-fadeUp animate-delay-100"
+            style={{ letterSpacing: '-0.02em' }}
+            aria-label="NBH STREETWEAR"
           >
             NBH STREETWEAR
-          </h2>
-          
-          {/* Subtitle with staggered animation - optional */}
-          <p className="mt-4 text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
+          </h1>
+
+          <p className="mt-3 text-xs sm:text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
             Estilo urbano que define tu actitud
           </p>
         </div>
