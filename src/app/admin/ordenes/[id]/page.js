@@ -1,10 +1,9 @@
-// src/app/admin/ordenes/[id]/page.js
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase/client';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 export default function OrdenDetalleAdminPage() {
   const { id } = useParams(); // id de la orden
@@ -15,188 +14,80 @@ export default function OrdenDetalleAdminPage() {
   const [error, setError] = useState(null);
   const [orden, setOrden] = useState(null);
 
-  useEffect(() => {
+  const fetchOrden = useCallback(async () => {
     if (!id) return;
-    let mounted = true;
-
-    async function fetchOrden() {
-      setLoading(true);
-      setError(null);
-      try {
-        // Obtener orden con relaciones:
-        // - usuario (nombre,email)
-        // - orden_items -> producto
-        // - comprobantes_pago
-        const { data, error } = await supabase
-          .from('ordenes')
-          .select(`
-            id,
-            usuario:usuarios(id, nombre, email),
-            estado,
-            total,
-            fecha,
-            orden_items (
-              id,
-              cantidad,
-              precio,
-              producto:productos(id, nombre, stock)
-            ),
-            comprobantes_pago (id, metodo_pago, estado, comprobante_url, fecha)
-          `)
-          .eq('id', id)
-          .single();
-
-        if (error) throw error;
-        if (!mounted) return;
-        setOrden(data);
-      } catch (err) {
-        console.error(err);
-        setError(err.message || 'Error cargando la orden');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    fetchOrden();
-    return () => {
-      mounted = false;
-    };
-  }, [id]);
-
-  // Refrescar datos
-  const refresh = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      const { data } = await supabase
-        .from('ordenes')
-        .select(`
-          id,
-          usuario:usuarios(id, nombre, email),
-          estado,
-          total,
-          fecha,
-          orden_items (
-            id,
-            cantidad,
-            precio,
-            producto:productos(id, nombre, stock)
-          ),
-          comprobantes_pago (id, metodo_pago, estado, comprobante_url, fecha)
-        `)
-        .eq('id', id)
-        .single();
+      const response = await fetch(`/api/admin/ordenes/${id}`);
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'Error cargando la orden');
+      }
+      const { data } = await response.json();
       setOrden(data);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Error refrescando');
+      setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchOrden();
+  }, [fetchOrden]);
+
+  // Refrescar datos
+  const refresh = () => fetchOrden();
+
+  const handleUpdateStatus = async (action, comprobanteId) => {
+    if (!orden) return;
+
+    const confirmText = action === 'verify'
+      ? '¿Confirmas verificar este pago y marcar la orden como pagada?'
+      : '¿Confirmas rechazar este comprobante?';
+
+    if (!confirm(confirmText)) return;
+
+    setProcessing(true);
+    try {
+      const response = await fetch(`/api/admin/ordenes/${orden.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, comprobanteId }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ocurrió un error');
+      }
+
+      toast.success(result.message || 'Operación exitosa');
+      await refresh();
+    } catch (err) {
+      console.error(`Error processing action ${action}:`, err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setProcessing(false);
     }
   };
 
   // Verificar pago: actualiza comprobante y orden, decrementa stock
-  const handleVerificar = async (comprobanteId) => {
-    if (!orden) return;
-    const comprobante = orden.comprobantes_pago?.find((c) => c.id === comprobanteId);
-    if (!comprobante) return alert('Comprobante no encontrado');
-
-    if (!confirm('¿Confirmas verificar este pago y marcar la orden como pagada?')) return;
-
-    setProcessing(true);
-    try {
-      // 1) Validar stocks antes de aplicar cambios
-      for (const item of orden.orden_items) {
-        const prod = item.producto;
-        const need = Number(item.cantidad || 0);
-        const stock = Number(prod?.stock ?? 0);
-        if (stock < need) {
-          alert(
-            `Stock insuficiente para "${prod?.nombre || prod?.id}". Stock actual: ${stock}, requerido: ${need}. Corrige el stock antes de verificar.`
-          );
-          setProcessing(false);
-          return;
-        }
-      }
-
-      // 2) Actualizar comprobante a 'verificado'
-      const { error: compErr } = await supabase
-        .from('comprobantes_pago')
-        .update({ estado: 'verificado' })
-        .eq('id', comprobanteId);
-
-      if (compErr) throw compErr;
-
-      // 3) Actualizar orden a 'pagado'
-      const { error: ordErr } = await supabase
-        .from('ordenes')
-        .update({ estado: 'pagado' })
-        .eq('id', orden.id);
-
-      if (ordErr) throw ordErr;
-
-      // 4) Reducir stock por cada item
-      for (const item of orden.orden_items) {
-        const prodId = item.producto.id;
-        const qty = Number(item.cantidad || 0);
-
-        // Obtener stock actual (releer para reducir riesgo de race)
-        const { data: prodData, error: prodErr } = await supabase
-          .from('productos')
-          .select('stock')
-          .eq('id', prodId)
-          .single();
-
-        if (prodErr) throw prodErr;
-
-        const currentStock = Number(prodData.stock ?? 0);
-        const newStock = currentStock - qty;
-
-        const { error: updErr } = await supabase
-          .from('productos')
-          .update({ stock: newStock })
-          .eq('id', prodId);
-
-        if (updErr) throw updErr;
-      }
-
-      alert('Pago verificado, orden marcada como PAGADA y stock actualizado.');
-      await refresh();
-    } catch (err) {
-      console.error('Error verificando pago:', err);
-      alert('Error verificando pago: ' + (err.message || err));
-    } finally {
-      setProcessing(false);
+  const handleVerificar = (comprobanteId) => {
+    if (!orden?.comprobantes_pago?.find((c) => c.id === comprobanteId)) {
+      return toast.error('Comprobante no encontrado');
     }
+    handleUpdateStatus('verify', comprobanteId);
   };
 
   // Rechazar pago: marca comprobante y orden como rechazado
-  const handleRechazar = async (comprobanteId) => {
-    if (!orden) return;
-    if (!confirm('¿Confirmas rechazar este comprobante?')) return;
-    setProcessing(true);
-    try {
-      const { error: compErr } = await supabase
-        .from('comprobantes_pago')
-        .update({ estado: 'rechazado' })
-        .eq('id', comprobanteId);
-
-      if (compErr) throw compErr;
-
-      const { error: ordErr } = await supabase
-        .from('ordenes')
-        .update({ estado: 'rechazado' })
-        .eq('id', orden.id);
-
-      if (ordErr) throw ordErr;
-
-      alert('Comprobante rechazado y orden marcada como RECHAZADA.');
-      await refresh();
-    } catch (err) {
-      console.error('Error rechazando comprobante:', err);
-      alert('Error rechazando comprobante: ' + (err.message || err));
-    } finally {
-      setProcessing(false);
+  const handleRechazar = (comprobanteId) => {
+    if (!orden?.comprobantes_pago?.find((c) => c.id === comprobanteId)) {
+      return toast.error('Comprobante no encontrado');
     }
+    handleUpdateStatus('reject', comprobanteId);
   };
 
   if (loading) {

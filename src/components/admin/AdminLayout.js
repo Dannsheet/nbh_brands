@@ -61,25 +61,23 @@ export default function AdminLayout({ children }) {
     return () => { mounted = false; };
   }, [router]);
 
-  // Efecto para el contador de órdenes pendientes en tiempo real
+  // Efecto para el contador de órdenes pendientes
   useEffect(() => {
-    const getCount = async () => {
-      const { count, error } = await supabase
-        .from('ordenes')
-        .select('id', { count: 'exact', head: true })
-        .eq('estado', 'pendiente');
-      if (!error) setPendingOrders(count);
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/admin/stats');
+        if (!response.ok) return;
+        const { data } = await response.json();
+        setPendingOrders(data.pendingOrders || 0);
+      } catch (error) {
+        console.error('Error fetching admin stats:', error);
+      }
     };
 
-    getCount(); // Fetch inicial
-
-    const channel = supabase
-      .channel('public:ordenes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'ordenes' }, () => getCount())
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
-  }, []);
+    fetchStats();
+    // La suscripción en tiempo real se elimina para simplificar y centralizar la lógica.
+    // Se podría implementar un re-fetching periódico si es necesario.
+  }, [pathname]); // Recargar en cada cambio de ruta del admin
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

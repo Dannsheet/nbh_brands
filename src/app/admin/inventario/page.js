@@ -1,62 +1,77 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
-import { FiSearch, FiDownload, FiEdit2, FiSave, FiX, FiTrash2, FiPlus } from 'react-icons/fi';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { FiSearch, FiDownload, FiEdit2, FiSave, FiX, FiTrash2, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import Link from 'next/link';
 import ConfirmationModal from '@/components/admin/ConfirmationModal';
 import toast from 'react-hot-toast';
 
+const DEBOUNCE_DELAY = 300; // ms
+
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [inventory, setInventory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingItem, setEditingItem] = useState(null);
   const [tempStock, setTempStock] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0 });
+  const [sortBy, setSortBy] = useState([{ id: 'producto.nombre', desc: false }, { id: 'color', desc: false }]);
 
-  // Fetch inventory data on component mount
-  const fetchInventory = async () => {
+  // Debounce search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, DEBOUNCE_DELAY);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  const fetchInventory = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('inventario_productos')
-        .select(`
-          id,
-          producto_id,
-          color,
-          talla,
-          stock,
-          productos:producto_id(nombre, slug)
-        `)
-        .order('productos.nombre', { ascending: true })
-        .order('color', { ascending: true })
-        .order('talla', { ascending: true });
+      const params = new URLSearchParams();
+      params.append('page', pagination.page);
+      params.append('limit', pagination.limit);
+      if (debouncedSearchTerm) params.append('search', debouncedSearchTerm);
 
-      if (error) throw error;
+      const sortString = sortBy.map(s => `${s.desc ? '-' : ''}${s.id}`).join(',');
+      if (sortString) params.append('sort_by', sortString);
+
+      const response = await fetch(`/api/admin/inventario?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch inventory');
+      }
+      const { data, meta } = await response.json();
       setInventory(data || []);
+      setPagination(prev => ({ ...prev, total: meta.total }));
     } catch (error) {
       console.error('Error fetching inventory:', error);
+      toast.error('No se pudo cargar el inventario.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, debouncedSearchTerm, sortBy]);
 
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [fetchInventory]);
 
   // Group inventory by product and calculate total stock
   const inventoryByProduct = useMemo(() => {
     const grouped = {};
     
     inventory.forEach(item => {
-      const productId = item.producto_id;
+      const productId = item.producto.id;
       if (!grouped[productId]) {
         grouped[productId] = {
           id: productId,
-          nombre: item.productos?.nombre || 'Producto sin nombre',
-          slug: item.productos?.slug || '',
+          nombre: item.producto?.nombre || 'Producto sin nombre',
+          slug: item.producto?.slug || '',
           items: [],
           totalStock: 0
         };
@@ -72,16 +87,15 @@ export default function InventoryPage() {
       grouped[productId].totalStock += item.stock;
     });
     
-    return grouped;
+    return Object.values(grouped);
   }, [inventory]);
 
-  // Filter products by search term
+  // Client-side filtering is no longer the primary method, but can be kept for instant feedback
   const filteredProducts = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase();
-    return Object.values(inventoryByProduct).filter(product => 
-      product.nombre.toLowerCase().includes(searchLower)
-    );
-  }, [inventoryByProduct, searchTerm]);
+    // The API now handles filtering, so this might just return inventoryByProduct directly
+    // or be removed if server-side filtering is sufficient.
+    return inventoryByProduct;
+  }, [inventoryByProduct]);
 
   // Export to CSV
   const exportToCSV = () => {
@@ -120,10 +134,11 @@ export default function InventoryPage() {
   // Handle stock update
   const handleUpdateStock = async (itemId, newStock) => {
     try {
-      const { error } = await supabase
-        .from('inventario_productos')
-        .update({ stock: parseInt(newStock, 10) })
-        .eq('id', itemId);
+      const { error } = await fetch(`/api/admin/inventario/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stock: parseInt(newStock, 10) })
+      });
       
       if (error) throw error;
       
@@ -151,10 +166,9 @@ export default function InventoryPage() {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      const { error } = await supabase
-        .from('inventario_productos')
-        .delete()
-        .eq('id', itemToDelete.id);
+      const { error } = await fetch(`/api/admin/inventario/${itemToDelete.id}`, {
+        method: 'DELETE'
+      });
 
       if (error) throw error;
 

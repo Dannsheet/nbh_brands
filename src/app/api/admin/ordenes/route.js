@@ -13,7 +13,7 @@ function parsePositiveInt(value, fallback) {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 }
 
-const ALLOWED_SORT = new Set(['fecha', 'total', 'estado']);
+const ALLOWED_SORT = new Set(['fecha', 'total', 'estado', 'usuarios.nombre', 'usuarios.email']);
 
 export async function GET(req) {
   const supabase = createClient();
@@ -31,20 +31,29 @@ export async function GET(req) {
 
     const usuario_id = params.get('usuario_id');
     const estado = params.get('estado');
-    const sort_by = ALLOWED_SORT.has(params.get('sort_by'))
-      ? params.get('sort_by')
-      : 'fecha';
-    const order =
-      (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const order = (params.get('order') || 'desc').toLowerCase() === 'asc' ? 'asc' : 'desc';
+    const sortByParam = params.get('sort_by');
 
     let query = supabase
       .from('ordenes')
-      .select('id, usuario_id, estado, total, fecha', { count: 'exact' });
+      .select('id, usuario_id, estado, total, fecha, usuario:usuarios(nombre, email)', { count: 'exact' });
 
     if (usuario_id) query = query.eq('usuario_id', usuario_id);
     if (estado) query = query.eq('estado', estado);
 
-    query = query.order(sort_by, { ascending: order === 'asc' });
+    if (sortByParam) {
+      const sortFields = sortByParam.split(',');
+      sortFields.forEach(field => {
+        const [relatedTable, relatedField] = field.includes('.') ? field.split('.') : [null, field];
+        if (relatedTable && ALLOWED_SORT.has(field)) {
+          query = query.order(relatedField, { ascending: order === 'asc', foreignTable: relatedTable });
+        } else if (ALLOWED_SORT.has(field)) {
+          query = query.order(field, { ascending: order === 'asc' });
+        }
+      });
+    } else {
+      query = query.order('fecha', { ascending: false });
+    }
 
     const from = (page - 1) * limit;
     const to = from + limit - 1;
