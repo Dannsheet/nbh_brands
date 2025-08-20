@@ -31,9 +31,9 @@ export async function GET(request) {
     const productoIds = data.map(p => p.id);
     const { data: inventario, error: inventarioError } = await supabase
       .from('inventario_productos')
-      .select('producto_id, talla, color')
+      .select('producto_id, talla, color, stock')
       .in('producto_id', productoIds)
-      .gt('cantidad', 0);
+      .gt('stock', 0);
 
     if (inventarioError) {
       console.error('Error fetching inventario:', inventarioError);

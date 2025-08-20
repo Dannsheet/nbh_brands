@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export default function CartItem({ item, onRemove, onUpdateQuantity }) {
   const producto = item.productos;
-  const [cantidad, setCantidad] = useState(item.cantidad);
+  const [cantidad, setCantidad] = useState(item.cantidad ?? item.stock ?? 1);
 
   const handleRemove = () => {
     onRemove(item.id);

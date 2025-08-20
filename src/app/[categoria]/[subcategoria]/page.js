@@ -2,7 +2,10 @@
 import { supabase } from "@/lib/supabase/client";
 
 export default async function SubcategoriaPage({ params }) {
-  const { categoria, subcategoria } = params;
+  const { categoria, subcategoria } = await params;
+  if (!categoria || categoria.endsWith('.ico') || categoria === 'favicon.ico') {
+    return new Response(null, { status: 204 });
+  }
 
   // 1. Buscar la categoría padre
   const { data: catData, error: catError } = await supabase
@@ -28,14 +31,23 @@ export default async function SubcategoriaPage({ params }) {
   }
 
   // 3. Traer productos por subcategoria_id
-  const { data: productos, error: prodError } = await supabase
+  const { data, error: prodError } = await supabase
     .from("productos")
-    .select("id, nombre, slug, precio, imagen_url")
+    .select("id, nombre, slug, precio, imagen_url, created_at")
     .eq("subcategoria_id", subData.id);
 
   if (prodError) {
     return <h1>Error cargando productos</h1>;
   }
+
+  const productos = (data || []).map(p => ({
+    id: p.id,
+    nombre: p.nombre,
+    slug: p.slug,
+    precio: p.precio ? Number(p.precio) : null,
+    imagen_url: p.imagen_url,
+    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
+  }));
 
   return (
     <div className="p-6">

@@ -26,16 +26,16 @@ export function CartProvider({ children }) {
   const items = data?.items || [];
 
   // 🔹 Calcular cantidad total de items
-  const totalCantidad = items.reduce((acc, item) => acc + item.cantidad, 0);
+  const totalCantidad = items.reduce((acc, item) => acc + (item.cantidad ?? item.stock ?? 1), 0);
 
   // 🔹 Añadir item al carrito
   const addToCart = useCallback(
-    async ({ producto_id, producto_nombre, color, talla, cantidad }) => {
+    async ({ producto_id, producto_nombre, color, talla, cantidad, stock }) => {
       try {
         const res = await fetch("/api/carrito", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ producto_id, producto_nombre, color, talla, cantidad }),
+          body: JSON.stringify({ producto_id, producto_nombre, color, talla, cantidad: cantidad ?? stock }),
           credentials: 'include',
         });
 
@@ -84,12 +84,12 @@ export function CartProvider({ children }) {
 
   // 🔹 Actualizar cantidad
   const updateQuantity = useCallback(
-    async (itemId, cantidad) => {
+    async (itemId, cantidad, stock) => {
       try {
         mutate(
           {
             items: items.map((i) =>
-              i.id === itemId ? { ...i, cantidad } : i
+              i.id === itemId ? { ...i, cantidad: cantidad ?? stock } : i
             ),
           },
           false
@@ -98,7 +98,7 @@ export function CartProvider({ children }) {
         await fetch("/api/carrito", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: itemId, cantidad }),
+          body: JSON.stringify({ id: itemId, cantidad: cantidad ?? stock }),
           credentials: 'include',
         });
 

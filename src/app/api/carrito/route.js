@@ -4,7 +4,8 @@ import { NextResponse } from 'next/server';
 
 // GET: Obtener el carrito del usuario
 export async function GET(req) {
-  const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -22,12 +23,27 @@ export async function GET(req) {
     return NextResponse.json({ error: 'Error al obtener carrito' }, { status: 500 });
   }
 
-  return NextResponse.json({ items: data || [] });
+  // Map to POJOs
+  const items = (data || []).map(item => ({
+    id: item.id,
+    cantidad: item.cantidad,
+    color: item.color,
+    talla: item.talla,
+    producto: item.productos ? {
+      nombre: item.productos.nombre,
+      precio: item.productos.precio ? Number(item.productos.precio) : null,
+      imagen_url: item.productos.imagen_url,
+      slug: item.productos.slug
+    } : null
+  }));
+
+  return NextResponse.json({ items });
 }
 
 // POST: Añadir un ítem al carrito
 export async function POST(req) {
-  const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
@@ -54,7 +70,8 @@ export async function POST(req) {
 
 // DELETE: Eliminar un ítem del carrito
 export async function DELETE(req) {
-  const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 
@@ -75,7 +92,8 @@ export async function DELETE(req) {
 
 // PATCH: Actualizar la cantidad de un ítem
 export async function PATCH(req) {
-  const supabase = createRouteHandlerClient({ cookies: () => cookies() });
+  const cookieStore = await cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 

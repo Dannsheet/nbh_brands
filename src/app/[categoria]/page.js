@@ -1,19 +1,31 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export default async function CategoriaPage({ params }) {
-  const { categoria } = params;
+  const { categoria } = await params;
+  if (!categoria || categoria.endsWith('.ico') || categoria === 'favicon.ico') {
+    return new Response(null, { status: 204 });
+  }
 
   // Buscar productos de la categoría
-  const { data: productos, error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("productos")
-    .select("*")
-    .eq("categoria_id", categoria) // ⚠️ si tu slug está en categorias, hay que resolver el id
+    .select("id, nombre, slug, precio, imagen_url, created_at")
+    .eq("categoria_id", categoria)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Error cargando categoría:", error.message);
     return <div>Error al cargar productos de {categoria}</div>;
   }
+
+  const productos = (data || []).map(p => ({
+    id: p.id,
+    nombre: p.nombre,
+    slug: p.slug,
+    precio: p.precio ? Number(p.precio) : null,
+    imagen_url: p.imagen_url,
+    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
+  }));
 
   if (!productos || productos.length === 0) {
     return <div>No hay productos en {categoria}</div>;
