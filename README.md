@@ -20,6 +20,16 @@ You can start editing the page by modifying `app/page.js`. The page auto-updates
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Routing Conventions
+
+This project uses Spanish for its primary URL routes to maintain consistency across the user-facing application (e.g., `/registro`, `/carrito`, `/perfil`).
+
+To ensure a good user experience and for SEO purposes, common English-language equivalents are permanently redirected (301) to their Spanish counterparts. For example:
+
+- `/register` redirects to `/registro`
+
+This convention is enforced via redirects in `next.config.mjs`. Please adhere to this pattern when creating new pages.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
