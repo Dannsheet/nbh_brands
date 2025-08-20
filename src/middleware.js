@@ -50,5 +50,9 @@ export const config = {
     '/perfil',
     '/login',
     '/registro',
+    // API routes that need session refresh
+    '/api/carrito/:path*',
+    '/api/admin/:path*',
+    '/api/perfil/:path*',
   ],
 };
