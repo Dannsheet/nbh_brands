@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // 👈 Import Link
+import Link from 'next/link'; // 
 import { supabase } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formDisabled, setFormDisabled] = useState(true);
+  const [disabledMsg, setDisabledMsg] = useState('Inicio de sesión deshabilitado temporalmente');
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -17,9 +19,11 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(disabledMsg);
+    return;
+    /*
     setError('');
     setLoading(true);
-
     try {
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email: formData.email,
@@ -56,6 +60,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
+    */
   };
 
   return (
@@ -76,37 +81,29 @@ export default function LoginPage() {
           <div className="space-y-4">
             <input {...{
               id:"email", name:"email", type:"email", placeholder:"Correo electrónico",
-              value:formData.email, onChange:handleChange, disabled:loading, required:true,
+              value:formData.email, onChange:handleChange, disabled:formDisabled, required:true,
               className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
             }} />
 
             <input {...{
               id:"password", name:"password", type:"password", placeholder:"Contraseña",
-              value:formData.password, onChange:handleChange, disabled:loading, required:true,
+              value:formData.password, onChange:handleChange, disabled:formDisabled, required:true,
               className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
             }} />
           </div>
 
           <div className="pt-2">
-            <button type="submit" disabled={loading} className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all duration-200 flex items-center justify-center ${loading ? 'opacity-80 cursor-not-allowed' : ''}`}>
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  INGRESANDO...
-                </>
-              ) : 'INGRESAR'}
+            <button type="submit" disabled={formDisabled} className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 opacity-60 cursor-not-allowed`}>
+              INGRESAR
             </button>
           </div>
 
           <div className="text-center text-sm text-gray-400">
             <p>
               ¿No tienes una cuenta?{' '}
-              <Link href="/registro" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
-                Regístrate
-              </Link>
+              {/* <Link href="/registro" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200"> */}
+              <span className="text-yellow-400 cursor-not-allowed opacity-60 font-medium">Regístrate</span>
+              {/* </Link> */}
             </p>
           </div>
         </form>

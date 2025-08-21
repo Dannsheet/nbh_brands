@@ -61,7 +61,7 @@ export default function Navbar({ categorias = [] }) {
         {/* Iconos lado derecho */}
         <div className="flex items-center gap-3">
           <Link href="/rastreo" className="hidden sm:inline text-sm font-medium hover:text-yellow-400">Rastrear mi pedido</Link>
-          <Link href="/ubicacion" className="text-sm font-medium hover:text-yellow-400">Encuéntranos</Link>
+          <Link href="/ubicacion" className="text-sm font-medium hover:text-yellow-400">Encuentranos</Link>
           <button className="hidden sm:inline-block p-1 hover:text-yellow-500" aria-label="Buscar">
             <Search className="w-5 h-5" />
           </button>
