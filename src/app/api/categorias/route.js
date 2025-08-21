@@ -1,50 +1,39 @@
-import { NextResponse } from 'next/server';
-import { supabaseAdmin as supabase } from '@/lib/supabase/admin';
+// src/app/api/categorias/route.js
+import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { deepSanitize } from '@/lib/deepSanitize';
+import { sanitizeCategorias } from '@/lib/sanitize';
 
-// Función recursiva para obtener subcategorías
-async function getSubcategorias(categoriaId) {
-  const { data, error } = await supabase
-    .from('categorias')
-    .select('id, nombre, slug')
-    .eq('parent_id', categoriaId);
-
-  if (error) {
-    console.error('Error fetching subcategories:', error);
-    return [];
-  }
-
-  // Para cada subcategoría, busca sus propias subcategorías
-  for (const sub of data) {
-    sub.children = await getSubcategorias(sub.id);
-  }
-
-  return data;
-}
+export const revalidate = 60; // cache 60s
 
 export async function GET() {
   try {
-    // 1. Obtener solo las categorías principales (las que no tienen padre)
-    const { data: categorias, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('categorias')
-      .select('id, nombre, slug')
-      .is('parent_id', null);
+      .select(`
+        id,
+        nombre,
+        slug,
+        subcategorias:categorias!parent_id (
+          id,
+          nombre,
+          slug
+        )
+      `)
+      .is('parent_id', null)
+      .order('nombre', { ascending: true });
 
-    if (error) {
-      console.error('Error fetching parent categories:', error);
-      throw new Error(error.message);
-    }
+    if (error) throw error;
 
-    // 2. Para cada categoría principal, obtener sus hijos de forma recursiva
-    for (const cat of categorias) {
-      cat.children = await getSubcategorias(cat.id);
-    }
+    const safe = deepSanitize(data);
+    const result = (sanitizeCategorias(safe) || []).map(cat => ({
+      ...cat,
+      subcategorias: Array.isArray(cat.subcategorias) ? cat.subcategorias : []
+    }));
 
-    return NextResponse.json(categorias);
-
-  } catch (error) {
-    return new NextResponse(
-      JSON.stringify({ error: 'Error al obtener las categorías' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return NextResponse.json(result);
+  } catch (err) {
+    console.error("Error en /api/categorias:", err);
+    return NextResponse.json({ error: "Error al obtener categorías" }, { status: 500 });
   }
 }

@@ -3,8 +3,9 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import toast from 'react-hot-toast';
 
-export default function InventarioProducto({ productoId, onAddToCart, onColorChange, onVariantSelect, extraButtons = null }) {
+export default function InventarioProducto({ producto, onAddToCart, onColorChange, onVariantSelect, extraButtons = null }) {
   const [inventario, setInventario] = useState([]);
   const [colores, setColores] = useState([]);
   const [tallasDisponibles, setTallasDisponibles] = useState([]);
@@ -23,11 +24,11 @@ export default function InventarioProducto({ productoId, onAddToCart, onColorCha
   useEffect(() => {
     let mounted = true;
     async function fetchInventario() {
-      if (!productoId) return;
+      if (!producto?.id) return;
       const { data, error } = await supabase
         .from('inventario_productos')
         .select('*')
-        .eq('producto_id', productoId)
+        .eq('producto_id', producto.id)
         .gt('stock', 0);
 
       if (!error && data && mounted) {
@@ -47,7 +48,7 @@ export default function InventarioProducto({ productoId, onAddToCart, onColorCha
     }
     fetchInventario();
     return () => { mounted = false; };
-  }, [productoId]);
+  }, [producto?.id]);
 
   useEffect(() => {
     if (colorSeleccionado) {
@@ -82,13 +83,15 @@ export default function InventarioProducto({ productoId, onAddToCart, onColorCha
 
   const agregarAlCarrito = () => {
     if (!colorSeleccionado || !tallaSeleccionada || !cantidadSeleccionada) {
-      alert('Selecciona color, talla y cantidad');
+      toast.error('Selecciona color, talla y cantidad');
       return;
     }
     onAddToCart({
       color: colorSeleccionado,
       talla: tallaSeleccionada,
       cantidad: cantidadSeleccionada,
+      producto_nombre: producto.nombre,
+      producto_id: producto.id,
     });
   };
 

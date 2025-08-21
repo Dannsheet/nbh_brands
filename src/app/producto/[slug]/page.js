@@ -8,6 +8,7 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import InventarioProducto from '@/components/producto/InventarioProducto';
 import BotonWhatsApp from '@/components/BotonWhatsApp';
+import { useCart } from '@/context/CartContext';
 
 // Función para obtener la URL de la imagen por color
 async function fetchImagenPorColor(productoId, color) {
@@ -35,6 +36,7 @@ export default function Page() {
   const [indiceImagen, setIndiceImagen] = useState(0);
   const [isAdding, setIsAdding] = useState(false); // Estado para feedback visual
   const [paginaURL, setPaginaURL] = useState('');
+  const { addToCart } = useCart();
 
   useEffect(() => {
     async function fetchProducto() {
@@ -248,31 +250,8 @@ export default function Page() {
 
   const handleAddToCart = async (item) => {
     setIsAdding(true);
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      alert('Debes iniciar sesión para agregar productos al carrito.');
-      setIsAdding(false);
-      return;
-    }
-
-    const { error } = await supabase.from('carrito').insert([
-      {
-        usuario_id: user.id,
-        producto_id: producto.id,
-        color: item.color,
-        talla: item.talla,
-        cantidad: item.cantidad,
-      },
-    ]);
-
-    if (error) {
-      console.error('Error al agregar al carrito:', error);
-      alert('Error al agregar el producto. Inténtalo de nuevo.');
-    } else {
-      alert('¡Producto agregado al carrito!');
-      // Aquí podrías actualizar el estado global del carrito si lo tienes.
-    }
+    // El 'item' ya tiene { producto_id, producto_nombre, color, talla, cantidad }
+    await addToCart(item);
     setIsAdding(false);
   };
 
@@ -355,10 +334,10 @@ export default function Page() {
           
           <div className="border-t border-gray-700 pt-6">
             <InventarioProducto
-              productoId={producto.id}
+              producto={producto}
               onAddToCart={handleAddToCart}
               onColorChange={handleColorChange}
-              isAdding={isAdding} // Pasamos el estado para deshabilitar el botón si es necesario
+              isAdding={isAdding}
               extraButtons={<BotonWhatsApp producto={producto} className="w-full" />}
             />
           </div>

@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export default function CartItem({ item, onRemove, onUpdateQuantity }) {
   const producto = item.productos;
-  const [cantidad, setCantidad] = useState(item.cantidad);
+  const [cantidad, setCantidad] = useState(item.cantidad ?? item.stock ?? 1);
 
   const handleRemove = () => {
     onRemove(item.id);
@@ -43,15 +43,15 @@ export default function CartItem({ item, onRemove, onUpdateQuantity }) {
         <div className="flex items-center mt-2 gap-3">
           <span className="text-sm text-gray-400">CANTIDAD:</span>
           <button
-            onClick={() => handleChangeCantidad(cantidad - 1)}
+            onClick={() => handleChangeCantidad((item.cantidad ?? item.stock ?? 1) - 1)}
             className="px-2 py-1 text-white border border-gray-500 hover:bg-gray-700 rounded"
             aria-label="Disminuir cantidad"
           >
             −
           </button>
-          <span>{cantidad}</span>
+          <span>{item.cantidad ?? item.stock ?? 1}</span>
           <button
-            onClick={() => handleChangeCantidad(cantidad + 1)}
+            onClick={() => handleChangeCantidad((item.cantidad ?? item.stock ?? 1) + 1)}
             className="px-2 py-1 text-white border border-gray-500 hover:bg-gray-700 rounded"
             aria-label="Aumentar cantidad"
           >
@@ -61,7 +61,7 @@ export default function CartItem({ item, onRemove, onUpdateQuantity }) {
       </div>
 
       <div className="flex flex-col items-end gap-2">
-        <p className="font-bold text-yellow-400">${(producto?.precio || 0) * cantidad}</p>
+        <p className="font-bold text-yellow-400">${(producto?.precio || 0) * (item.cantidad ?? item.stock ?? 1)}</p>
         <button
           onClick={handleRemove}
           className="p-1 rounded-full text-gray-400 hover:bg-red-900/50 hover:text-red-400 transition-colors duration-200"

@@ -37,7 +37,7 @@ export default function CheckoutPage() {
       const { data, error } = await supabase
         .from('carrito')
         .select('id, cantidad, color, talla, producto:productos(*)')
-        .eq('user_id', user.id);
+        .eq('usuario_id', user.id); // OJO: tu campo se llama usuario_id en la tabla
       if (error) setError('Error obteniendo carrito');
       else setItems(data);
       setLoading(false);
@@ -68,38 +68,87 @@ export default function CheckoutPage() {
       data: { user },
     } = await supabase.auth.getUser();
 
-    // subir archivo
+    if (!user) {
+      alert('Debes iniciar sesión para continuar');
+      setSubmitting(false);
+      return;
+    }
+
+    // 1. Subir comprobante al bucket
     const path = `${user.id}/${Date.now()}_${file.name}`;
-    const { error: uploadErr } = await supabase.storage.from('comprobantes_pago').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
+    const { error: uploadErr } = await supabase.storage
+      .from('comprobantes_pago')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
     if (uploadErr) {
       alert('Error subiendo archivo');
       setSubmitting(false);
       return;
     }
-    const { data: publicUrlData } = supabase.storage.from('comprobantes_pago').getPublicUrl(path);
-    const imagen_url = publicUrlData.publicUrl;
 
-    // guardar metadata
-    const res = await fetch('/api/comprobante', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        usuario_id: user.id,
-        imagen_url,
-        nombre,
-        telefono,
-        notas,
-      }),
-    });
-    const respJson = await res.json();
-    setSubmitting(false);
-    if (!res.ok) {
-      alert(respJson.error || 'Error guardando comprobante');
+    // 2. Crear URL firmada (válida por 1h)
+    const { data: signedUrlData } = await supabase.storage
+      .from('comprobantes_pago')
+      .createSignedUrl(path, 60 * 60);
+
+    const imagen_url = signedUrlData?.signedUrl;
+
+    // 3. Crear orden en tabla ordenes
+    const { data: ordenData, error: ordenErr } = await supabase
+      .from('ordenes')
+      .insert([
+        {
+          usuario_id: user.id,
+          estado: 'pendiente',
+          total: subtotal,
+          fecha: new Date(),
+        },
+      ])
+      .select()
+      .single();
+
+    if (ordenErr) {
+      alert('Error creando la orden');
+      setSubmitting(false);
       return;
     }
+
+    // 4. Insertar ítems de la orden
+    const itemsToInsert = items.map((it) => ({
+      orden_id: ordenData.id,
+      producto_id: it.producto.id,
+      cantidad: it.cantidad,
+      precio: it.producto.precio,
+    }));
+
+    const { error: itemsErr } = await supabase.from('orden_items').insert(itemsToInsert);
+    if (itemsErr) {
+      alert('Error guardando items');
+      setSubmitting(false);
+      return;
+    }
+
+    // 5. Guardar comprobante en la tabla comprobantes_pago
+    const { error: compErr } = await supabase.from('comprobantes_pago').insert([
+      {
+        orden_id: ordenData.id,
+        usuario_id: user.id,
+        metodo: 'transferencia',
+        estado: 'pendiente',
+        comprobante_url: imagen_url,
+        fecha: new Date(),
+      },
+    ]);
+
+    if (compErr) {
+      alert('Error guardando comprobante');
+      setSubmitting(false);
+      return;
+    }
+
     alert('Comprobante enviado con éxito');
     router.push('/');
   };
@@ -152,7 +201,7 @@ export default function CheckoutPage() {
         </div>
         <div className="flex flex-col gap-2">
           <label className="text-sm">COMPROBANTE DE PAGO (JPG/PNG, máx 5MB)</label>
-          <input type="file" accept="image/jpeg,image/png" onChange={handleFileChange} required />
+          <input type="file" accept="image/jpeg,image/png,image/jpg,image/webp" onChange={handleFileChange} required />
           {preview && <Image src={preview} alt="Preview" width={200} height={200} className="rounded mt-2" />}
         </div>
         <button

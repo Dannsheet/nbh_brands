@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
+import { motion, useAnimation, useInView } from 'framer-motion';
 
 // Slides con versiones desktop y mobile por cada imagen.
 // Puedes reemplazar cada ruta por las optimizadas en WebP/AVIF, por ejemplo:
 // { desktop: '/fondo1-desktop.webp', mobile: '/fondo1-mobile.webp' }
 const slides = [
-  { desktop: "/fondo1.png", mobile: "/fondo1.png" },
+  { desktop: "/fondo1.png", mobile: "/fondo1mobile.png" },
   { desktop: "/fondo2.png", mobile: "/fondo2mobile.png" },
   { desktop: "/fondo3.png", mobile: "/fondo3mobile.png" },
 ];
@@ -16,6 +17,9 @@ const slides = [
 export default function Hero() {
   const [index, setIndex] = useState(0);
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+  const controls = useAnimation();
+  const h1Ref = useInView({ once: true });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,6 +27,35 @@ export default function Hero() {
     }, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    // Detect mobile
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      controls.start({
+        opacity: 1,
+        y: 0,
+        scale: [1, 1.04, 1],
+        transition: {
+          type: 'tween',
+          ease: 'easeInOut',
+          duration: 1.2,
+          delay: 0,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          repeatDelay: 2.5,
+        },
+      });
+    } else {
+      controls.start({ opacity: 1, y: 0, scale: 1 });
+    }
+  }, [isMobile, controls]);
 
   // Preload del siguiente slide según viewport para suavizar la transición
   useEffect(() => {
@@ -49,7 +82,14 @@ export default function Hero() {
   };
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden bg-primary text-accent">
+    <section 
+      className="relative w-full overflow-hidden snap-start"
+      style={{
+        height: 'calc(100vh - var(--navbar-height))',
+        minHeight: 'calc(100vh - var(--navbar-height))',
+      }}
+      aria-label="Hero"
+    >
       {slides.map((s, i) => (
         <picture
           key={i}
@@ -69,31 +109,46 @@ export default function Hero() {
         </picture>
       ))}
 
- {/* OVERLAY CTA - Parte inferior como en BAPE */}
-<div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-10 text-center">
-  <h2 className="text-3xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">
-    NBH STREETWEAR
-  </h2>
-  <button
-    onClick={handleClick}
-    className="mt-2 px-6 py-3 bg-yellow-400 hover:bg-yellow-300 text-black font-semibold rounded shadow-md transition"
-  >
-    COMPRAR AHORA
-  </button>
-</div>
+      {/* Overlay oscuro */}
+      <div className="absolute inset-0 bg-black/40" />
+
+      {/* Contenido en la parte inferior */}
+      <div className="relative z-10 flex items-end justify-center h-full px-4 pb-12 md:pb-20">
+        <div className="w-full max-w-4xl text-center">
+          <motion.h1
+            ref={h1Ref}
+            className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white opacity-90 drop-shadow-lg"
+            aria-label="NBH STREETWEAR"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={controls}
+            transition={{ type: 'spring', stiffness: 200, damping: 28, duration: 1 }}
+            whileHover={{ letterSpacing: '0.08em', textShadow: '0 0 32px #fff, 0 2px 32px #FFD70088' }}
+            style={{
+              letterSpacing: '-0.02em',
+              textShadow: '0 2px 16px #fff3, 0 2px 32px #FFD70033',
+            }}
+          >
+            NBH STREETWEAR
+          </motion.h1>
+
+          <p className="mt-3 text-xs sm:text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
+            Estilo urbano que te define
+          </p>
+        </div>
+      </div>
 
       {/* BOTONES DE NAVEGACIÓN */}
       <button
         onClick={goBack}
         aria-label="Imagen anterior"
-        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20"
+        className="absolute top-1/2 left-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20 animate-fadeUp animate-delay-300"
       >
         <ChevronLeft className="w-5 h-5" aria-hidden="true" />
       </button>
       <button
         onClick={goNext}
         aria-label="Imagen siguiente"
-        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20"
+        className="absolute top-1/2 right-4 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full hover:bg-black/60 transition-colors z-20 animate-fadeUp animate-delay-300"
       >
         <ChevronRight className="w-5 h-5" aria-hidden="true" />
       </button>

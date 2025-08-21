@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/Table';
 import SearchBar from './_components/SearchBar';
 import PaginationControls from './_components/PaginationControls';
+import ProductActions from './_components/ProductActions';
 
 // Configuración de paginación
 const ITEMS_PER_PAGE = 10;
@@ -65,7 +66,7 @@ export default async function ProductosAdminPage({ searchParams }) {
         <SearchBar placeholder="Buscar por nombre..." />
       </div>
 
-      <div className="rounded-lg border border-gray-800">
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
         <Table>
           <TableHeader>
             <TableRow>
@@ -102,12 +103,7 @@ export default async function ProductosAdminPage({ searchParams }) {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" asChild className="mr-2">
-                      <Link href={`/admin/productos/${product.id}/editar`}>
-                        Editar
-                      </Link>
-                    </Button>
-                    {/* El botón de eliminar requerirá un Client Component con diálogo */}
+                    <ProductActions product={product} />
                   </TableCell>
                 </TableRow>
               ))

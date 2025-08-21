@@ -7,8 +7,10 @@ export default function Home() {
   return (
     <main className="bg-primary text-accent">
       <Hero />
-      <CarruselDestacados />
-      <RecienLlegados />
+      <section className="snap-start">
+        <CarruselDestacados />
+        <RecienLlegados />
+      </section>
     </main>
   );
 }

@@ -1,7 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-        domains: ['luoneibyfgibvchinsll.supabase.co', 'bwychvsydhqtjkntqkta.supabase.co'],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'luoneibyfgibvchinsll.supabase.co',
+            },
+            {
+                protocol: 'https',
+                hostname: 'bwychvsydhqtjkntqkta.supabase.co',
+            },
+        ],
+    },
+    async redirects() {
+        return [
+          {
+            source: '/register',
+            destination: '/registro',
+            permanent: true,
+          },
+        ]
       },
 };
 

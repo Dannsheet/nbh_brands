@@ -1,4 +1,5 @@
-export default function PlaceholderPage() {
-    return <p>Sección en construcción</p>;
-  }
-  
+import AdminLayout from '@/components/admin/AdminLayout';
+
+export default function AdminRootLayout({ children }) {
+  return <AdminLayout>{children}</AdminLayout>;
+}
