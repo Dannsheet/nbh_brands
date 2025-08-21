@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 // 👇 importamos lo nuevo
 import { CartProvider } from "@/context/CartContext";
 import { Toaster } from "react-hot-toast";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata = {
   title: "NBH Brands",
@@ -25,6 +26,7 @@ export default function RootLayout({ children }) {
           </main>
           <Footer />
           <Analytics />
+          <SpeedInsights />
           {/* 👇 Toaster para notificaciones */}
           <Toaster position="bottom-right" />
         </CartProvider>
