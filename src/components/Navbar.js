@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ShoppingCart, Search, Menu as MenuIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext'; // Importamos el contexto del carrito
+import { motion } from 'framer-motion';
 
 const NavItem = dynamic(() => import('@/components/nav/NavItem'), { ssr: false });
 const MobileNavPanel = dynamic(() => import('@/components/nav/MobileNavPanel'), { ssr: false });

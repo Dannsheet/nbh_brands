@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from "next/navigation";
+import { motion, useAnimation, useInView } from 'framer-motion';
 
 // Slides con versiones desktop y mobile por cada imagen.
 // Puedes reemplazar cada ruta por las optimizadas en WebP/AVIF, por ejemplo:
@@ -16,6 +17,9 @@ const slides = [
 export default function Hero() {
   const [index, setIndex] = useState(0);
   const router = useRouter();
+  const [isMobile, setIsMobile] = useState(false);
+  const controls = useAnimation();
+  const h1Ref = useInView({ once: true });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,6 +27,35 @@ export default function Hero() {
     }, 4000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    // Detect mobile
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
+      controls.start({
+        opacity: 1,
+        y: 0,
+        scale: [1, 1.04, 1],
+        transition: {
+          type: 'tween',
+          ease: 'easeInOut',
+          duration: 1.2,
+          delay: 0,
+          repeat: Infinity,
+          repeatType: 'reverse',
+          repeatDelay: 2.5,
+        },
+      });
+    } else {
+      controls.start({ opacity: 1, y: 0, scale: 1 });
+    }
+  }, [isMobile, controls]);
 
   // Preload del siguiente slide según viewport para suavizar la transición
   useEffect(() => {
@@ -82,13 +115,21 @@ export default function Hero() {
       {/* Contenido en la parte inferior */}
       <div className="relative z-10 flex items-end justify-center h-full px-4 pb-12 md:pb-20">
         <div className="w-full max-w-4xl text-center">
-          <h1
-            className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white opacity-80 animate-fadeUp animate-delay-100"
-            style={{ letterSpacing: '-0.02em' }}
+          <motion.h1
+            ref={h1Ref}
+            className="text-3xl sm:text-4xl md:text-6xl font-extrabold text-white opacity-90 drop-shadow-lg"
             aria-label="NBH STREETWEAR"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={controls}
+            transition={{ type: 'spring', stiffness: 200, damping: 28, duration: 1 }}
+            whileHover={{ letterSpacing: '0.08em', textShadow: '0 0 32px #fff, 0 2px 32px #FFD70088' }}
+            style={{
+              letterSpacing: '-0.02em',
+              textShadow: '0 2px 16px #fff3, 0 2px 32px #FFD70033',
+            }}
           >
             NBH STREETWEAR
-          </h1>
+          </motion.h1>
 
           <p className="mt-3 text-xs sm:text-sm md:text-base text-gray-200 animate-fadeUp animate-delay-200">
             Estilo urbano que te define
