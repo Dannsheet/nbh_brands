@@ -26,7 +26,7 @@ export default function NavItem({ cat }) {
             {cat.subcategorias.map((subcat) => (
               <li key={subcat.id}>
                 <Link
-                  href={`/productos/categoria/${subcat.slug}`}
+                  href={`/productos/categoria/${cat.slug}/${subcat.slug}`}
                   className="block px-4 py-2 text-sm hover:bg-yellow-500 hover:text-black transition-colors duration-200"
                 >
                   {subcat.nombre}

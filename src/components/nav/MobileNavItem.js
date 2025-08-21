@@ -38,7 +38,7 @@ export default function MobileNavItem({ cat, onClose }) {
             {cat.subcategorias.map((subcat) => (
               <li key={subcat.id}>
                 <Link
-                  href={`/productos/categoria/${subcat.slug}`}
+                  href={`/productos/categoria/${cat.slug}/${subcat.slug}`}
                   onClick={handleLinkClick}
                   className="block py-1 text-sm text-gray-300 hover:text-yellow-400"
                 >

@@ -1,6 +1,7 @@
 // src/app/api/stock/[producto_id]/route.js
 import { NextResponse } from 'next/server';
 import createSupabaseServer from '@/lib/supabase/server';
+import { deepSanitize } from '@/lib/deepSanitize';
 
 export async function GET(_request, { params }) {
   try {
@@ -23,15 +24,23 @@ export async function GET(_request, { params }) {
       .eq('producto_id', producto_id);
 
     if (error) {
-      console.error('❌ Supabase error:', error);
+      if (process.env.DEBUG_POJO === 'true') {
+        console.error('❌ Supabase error:', error);
+      }
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
     console.log(`✅ Found ${data?.length || 0} inventory items`);
-    return NextResponse.json({ stock: data || [] });
-    
+
+    // deepSanitize para asegurar POJO serializable
+    const safeStock = deepSanitize(data || []);
+
+    return NextResponse.json({ stock: safeStock });
+
   } catch (error) {
-    console.error('❌ Unexpected error in /api/stock:', error);
+    if (process.env.DEBUG_POJO === 'true') {
+      console.error('❌ Unexpected error in /api/stock:', error);
+    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

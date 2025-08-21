@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import Navbar from './Navbar';
 import useCategoriasNavbar from '@/hooks/useCategoriasNavbar';
+import { deepSanitize } from '@/lib/deepSanitize';
 
 const adminPaths = ['/admin', '/login', '/registro'];
 
@@ -24,5 +25,15 @@ export default function ConditionalNavbar() {
     return <div className="h-[60px] bg-black text-white flex items-center justify-center">Error al cargar menú</div>;
   }
 
-  return <Navbar categorias={categorias} />;
+  // Sanitizar antes de pasar a Navbar
+  const safeCategorias = deepSanitize(categorias || []);
+  if (process.env.DEBUG_POJO === 'true') {
+    safeCategorias.forEach((c, i) => {
+      if (Object.getPrototypeOf(c) !== Object.prototype) {
+        console.warn(`[DEBUG][POJO] categoria #${i} no es POJO:`, c);
+      }
+    });
+  }
+
+  return <Navbar categorias={safeCategorias} />;
 }

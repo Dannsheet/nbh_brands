@@ -1,5 +1,7 @@
 // src/app/[categoria]/[subcategoria]/page.js
 import { supabase } from "@/lib/supabase/client";
+import { sanitizeProductos } from "@/lib/sanitize";
+import { deepSanitize } from "@/lib/deepSanitize";
 
 export default async function SubcategoriaPage({ params }) {
   const { categoria, subcategoria } = await params;
@@ -40,14 +42,17 @@ export default async function SubcategoriaPage({ params }) {
     return <h1>Error cargando productos</h1>;
   }
 
-  const productos = (data || []).map(p => ({
-    id: p.id,
-    nombre: p.nombre,
-    slug: p.slug,
-    precio: p.precio ? Number(p.precio) : null,
-    imagen_url: p.imagen_url,
-    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
-  }));
+  const safe = deepSanitize(data);
+  const productos = sanitizeProductos(safe);
+
+  // Debug temporal para detectar non-POJO
+  if (Array.isArray(productos)) {
+    productos.forEach((p, i) => {
+      if (Object.getPrototypeOf(p) !== Object.prototype) {
+        console.warn(`[DEBUG][POJO] Producto #${i} no es POJO:`, p);
+      }
+    });
+  }
 
   return (
     <div className="p-6">

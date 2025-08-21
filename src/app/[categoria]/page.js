@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { deepSanitize } from "@/lib/deepSanitize";
+import { sanitizeProductos } from "@/lib/sanitize";
 
 export default async function CategoriaPage({ params }) {
   const { categoria } = await params;
@@ -18,14 +20,17 @@ export default async function CategoriaPage({ params }) {
     return <div>Error al cargar productos de {categoria}</div>;
   }
 
-  const productos = (data || []).map(p => ({
-    id: p.id,
-    nombre: p.nombre,
-    slug: p.slug,
-    precio: p.precio ? Number(p.precio) : null,
-    imagen_url: p.imagen_url,
-    created_at: p.created_at ? new Date(p.created_at).toISOString() : null,
-  }));
+  const safe = deepSanitize(data);
+  const productos = sanitizeProductos(safe);
+
+  // Debug temporal para detectar non-POJO
+  if (Array.isArray(productos)) {
+    productos.forEach((p, i) => {
+      if (Object.getPrototypeOf(p) !== Object.prototype) {
+        console.warn(`[DEBUG][POJO] Producto #${i} no es POJO:`, p);
+      }
+    });
+  }
 
   if (!productos || productos.length === 0) {
     return <div>No hay productos en {categoria}</div>;

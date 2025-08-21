@@ -1,6 +1,8 @@
 // src/app/api/categorias/route.js
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { deepSanitize } from '@/lib/deepSanitize';
+import { sanitizeCategorias } from '@/lib/sanitize';
 
 export const revalidate = 60; // cache 60s
 
@@ -23,9 +25,10 @@ export async function GET() {
 
     if (error) throw error;
 
-    const result = (data || []).map(cat => ({
+    const safe = deepSanitize(data);
+    const result = (sanitizeCategorias(safe) || []).map(cat => ({
       ...cat,
-      subcategorias: cat.subcategorias || []
+      subcategorias: Array.isArray(cat.subcategorias) ? cat.subcategorias : []
     }));
 
     return NextResponse.json(result);
