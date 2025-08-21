@@ -12,7 +12,7 @@ export default function NavItem({ cat }) {
       <div className="relative group">
         <button
           type="button"
-          className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200 focus:outline-none"
+          className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200 focus:outline-none uppercase font-poppins"
           aria-expanded="true"
           aria-haspopup="true"
         >
@@ -43,7 +43,7 @@ export default function NavItem({ cat }) {
     <div className="relative group">
       <Link
         href={`/productos/categoria/${cat.slug}`}
-        className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200"
+        className="flex items-center gap-1 px-3 py-1 text-sm font-medium hover:text-yellow-400 transition-colors duration-200 uppercase font-poppins"
         aria-expanded="false"
         aria-haspopup="false"
       >

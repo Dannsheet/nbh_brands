@@ -63,7 +63,7 @@ export default async function SubcategoriaPage({ params }) {
   // Renderizado simple, puedes reemplazar por tu componente cliente
   return (
     <section className="p-6">
-      <h1 className="mb-6 text-2xl font-bold text-yellow-400">{sc.nombre}</h1>
+      <h1 className="mb-6 text-2xl font-bold text-yellow-400 text-center">{sc.nombre}</h1>
       {safeProductos.length === 0 ? (
         <div className="flex h-60 items-center justify-center rounded-md border border-dashed border-gray-700">
           <p className="text-gray-400">No hay productos en esta subcategoría por el momento.</p>
