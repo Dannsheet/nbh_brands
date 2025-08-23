@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sanitizeProductos } from '@/lib/sanitize';
 import { deepSanitize } from '@/lib/deepSanitize';
 import AnimatedSubcatTitle from '@/components/AnimatedSubcatTitle';
+import ProductoCard from '@/components/producto/ProductoCard';
 
 // Ajusta el import del componente de productos según tu estructura
 // Si tienes un componente cliente para la lista de productos, importa aquí
@@ -72,19 +73,7 @@ export default async function SubcategoriaPage({ params }) {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {safeProductos.map((producto) => (
-            <div key={producto.id} className="group overflow-hidden rounded-lg bg-gray-900 shadow transition hover:shadow-lg">
-              <img
-                src={producto.imagen_url || '/placeholder.jpg'}
-                alt={producto.nombre}
-                width={400}
-                height={400}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-semibold text-white">{producto.nombre}</h3>
-                <p className="font-bold text-yellow-400">${producto.precio}</p>
-              </div>
-            </div>
+            <ProductoCard key={producto.id} producto={producto} />
           ))}
         </div>
       )}
