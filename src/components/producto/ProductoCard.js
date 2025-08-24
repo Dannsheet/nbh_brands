@@ -17,7 +17,7 @@ export default function ProductoCard({ producto }) {
   );
 
   // Imagen principal y secundaria para hover
-  const imagenPrincipal = producto.imagen_principal || producto.imagenes?.[0] || "/placeholder.png";
+  const imagenPrincipal = producto.imagen_principal || producto.imagen_url || producto.imagenes?.[0] || "/placeholder.png";
   const imagenSecundaria = (() => {
     // Priorizar imagen distinta a la principal desde variantes
     const fromVariantes = (producto?.variantes || [])

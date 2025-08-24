@@ -41,7 +41,7 @@ export default async function SubcategoriaPage({ params }) {
   // Traer productos por subcategoria
   const { data: productosRaw, error: prodErr } = await supabaseAdmin
     .from('productos')
-    .select('id, nombre, slug, precio, imagen_url, created_at, subcategoria_id')
+    .select('id, nombre, slug, precio, imagen_url, imagenes, created_at, subcategoria_id')
     .eq('subcategoria_id', sc.id)
     .order('created_at', { ascending: false });
 
