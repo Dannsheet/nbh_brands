@@ -9,8 +9,6 @@ export default function LoginPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [formDisabled, setFormDisabled] = useState(true);
-  const [disabledMsg, setDisabledMsg] = useState('Inicio de sesión deshabilitado temporalmente');
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -19,9 +17,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(disabledMsg);
-    return;
-    /*
     setError('');
     setLoading(true);
     try {
@@ -60,7 +55,6 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   return (
@@ -79,22 +73,44 @@ export default function LoginPage() {
           )}
 
           <div className="space-y-4">
-            <input {...{
-              id:"email", name:"email", type:"email", placeholder:"Correo electrónico",
-              value:formData.email, onChange:handleChange, disabled:formDisabled, required:true,
-              className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-            }} />
+            <input {
+              ...{
+                id: "email",
+                name: "email",
+                type: "email",
+                placeholder: "Correo electrónico",
+                value: formData.email,
+                onChange: handleChange,
+                disabled: loading,
+                required: true,
+                className:
+                  "w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200",
+              }
+            } />
 
-            <input {...{
-              id:"password", name:"password", type:"password", placeholder:"Contraseña",
-              value:formData.password, onChange:handleChange, disabled:formDisabled, required:true,
-              className:"w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200"
-            }} />
+            <input {
+              ...{
+                id: "password",
+                name: "password",
+                type: "password",
+                placeholder: "Contraseña",
+                value: formData.password,
+                onChange: handleChange,
+                disabled: loading,
+                required: true,
+                className:
+                  "w-full px-4 py-3 bg-black border border-gray-700 rounded-md text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-all duration-200",
+              }
+            } />
           </div>
 
           <div className="pt-2">
-            <button type="submit" disabled={formDisabled} className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 opacity-60 cursor-not-allowed`}>
-              INGRESAR
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-3 px-4 rounded-md font-bold text-black bg-yellow-400 ${loading ? "opacity-60 cursor-not-allowed" : "hover:bg-yellow-500"}`}
+            >
+              {loading ? "Ingresando..." : "INGRESAR"}
             </button>
           </div>
 
