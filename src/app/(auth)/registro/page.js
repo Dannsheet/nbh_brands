@@ -155,9 +155,9 @@ export default function RegistroPage() {
               <div className="text-center text-sm text-gray-400">
                 <p>
                   ¿Ya tienes una cuenta?{' '}
-                  { <Link href="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200"> }
-                  <span className="text-yellow-400 cursor-not-allowed opacity-60 font-medium">Inicia sesión</span>
-                  {}
+                  <Link href="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
+                    Inicia sesión
+                  </Link>
                 </p>
               </div>
             </>

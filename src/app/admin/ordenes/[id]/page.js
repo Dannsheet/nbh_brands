@@ -19,13 +19,9 @@ export default function OrdenDetalleAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error, status } = await fetchSafe(`/api/admin/ordenes/${id}`);
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Error cargando la orden');
-      }
-      const { data } = await response.json();
-      setOrden(data);
+      const res = await fetchSafe(`/api/admin/ordenes/${id}`);
+      if (res.error) throw new Error(res.error);
+      setOrden(res.data ?? res ?? {});
     } catch (err) {
       console.error(err);
       setError(err.message);
