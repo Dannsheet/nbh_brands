@@ -1,7 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 
 import { Button } from '@/components/ui/Button';
 import {
@@ -56,7 +56,19 @@ export default async function ProductosAdminPage(props) {
   // OBLIGATORIO: await cookies() para evitar la advertencia de Next
   const cookieStore = await cookies();
   const tokenCookie = cookieStore.get?.('sb-bwychvsydhqtjkntqkta-auth-token'); // ajusta nombre si tu cookie es otra
-  const token = tokenCookie?.value ?? null;
+  let token = tokenCookie?.value ?? null;
+  // Robustecer: parsear array stringificado, objeto stringificado o string con comillas
+  if (token && (token.startsWith('[') || token.startsWith('"') || token.startsWith('{'))) {
+    try {
+      const parsed = JSON.parse(token);
+      if (Array.isArray(parsed)) token = parsed[0];
+      else if (parsed && typeof parsed === 'object') token = parsed.access_token || parsed.token || token;
+      else token = parsed;
+    } catch (e) {
+      if (token.startsWith('"') && token.endsWith('"')) token = token.slice(1, -1);
+      // else dejar como está
+    }
+  }
 
   // SEARCHPARAMS defensivo (Promise-like o plain object)
   const rawSearchParams = props?.searchParams;
@@ -98,12 +110,11 @@ export default async function ProductosAdminPage(props) {
               products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
-                    <Image
-                      src={product.imagen_url || '/placeholder.png'}
+                    <SafeImage
+                      src={product.imagen_url}
                       alt={product.nombre}
                       width={50}
                       height={50}
-                      className="rounded-md object-cover"
                     />
                   </TableCell>
                   <TableCell className="font-medium text-black">{product.nombre}</TableCell>
