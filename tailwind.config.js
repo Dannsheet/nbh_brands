@@ -10,7 +10,7 @@ module.exports = {
       colors: {
         primary: "#0e0e0e",    // negro oscuro (fondo)
         secondary: "#FFC700", // amarillo (resaltado)
-        accent: "#FFFFFF",    // blanco (texto)
+        accent: "#000000",    // negro (texto)
       },
       fontFamily: {
         inter: ["Inter", "sans-serif"],

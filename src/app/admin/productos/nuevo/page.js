@@ -96,7 +96,7 @@ export default function NuevoProductoPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Crear Nuevo Producto</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Crear Nuevo Producto</h1>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-8 space-y-6">
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>
@@ -108,7 +108,7 @@ export default function NuevoProductoPage() {
         </div>
         <div>
           <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">Descripción</label>
-          <textarea name="descripcion" id="descripcion" value={formData.descripcion} onChange={handleChange} rows="4" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+          <textarea name="descripcion" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} rows="4" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-200 text-black"></textarea>
         </div>
         <div>
           <label htmlFor="precio" className="block text-sm font-medium text-gray-700">Precio</label>

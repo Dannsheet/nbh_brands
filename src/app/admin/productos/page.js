@@ -84,7 +84,7 @@ export default async function ProductosAdminPage(props) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold uppercase text-black">Gestión de Productos</h1>
+        <h1 className="text-2xl font-bold uppercase" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Gestión de Productos</h1>
         <Button asChild>
           <Link href="/admin/productos/nuevo">Crear Producto</Link>
         </Button>

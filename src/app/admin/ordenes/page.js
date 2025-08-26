@@ -98,7 +98,7 @@ export default function OrdenesAdminPage() {
   return (
     <section className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-black">📦 Órdenes</h1>
+        <h1 className="text-3xl font-bold" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>📦 Órdenes</h1>
       </div>
 
       {/* Filters */}

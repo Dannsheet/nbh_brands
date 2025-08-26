@@ -11,7 +11,7 @@ import { fetchSafe } from '@/lib/fetchSafe';
 export default function UsuariosPage() {
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-2xl font-bold mb-4">Usuarios registrados</h1>
+      <h1 className="text-2xl font-bold mb-4" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Usuarios registrados</h1>
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <UsuariosTable />
       </div>

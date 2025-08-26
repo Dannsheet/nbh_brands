@@ -129,9 +129,36 @@ export async function PATCH(req) {
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const body = await req.json();
-    const { id, ...rest } = body;
-    if (!id) return NextResponse.json({ error: 'ID es obligatorio' }, { status: 400 });
-
+    let { id, ...rest } = body;
+    // Logging defensivo
+    console.info('[admin/productos PATCH] payload received:', {
+      id, categoria_id: rest.categoria_id, subcategoria_id: rest.subcategoria_id, nombre: rest.nombre
+    });
+    const isUUID = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    if (!isUUID(id)) {
+      console.warn('[admin/productos PATCH] invalid product id', id);
+      return NextResponse.json({ error: 'invalid product id' }, { status: 400 });
+    }
+    if ('categoria_id' in rest && rest.categoria_id && !isUUID(rest.categoria_id)) {
+      console.warn('[admin/productos PATCH] categoria_id not uuid, setting null', rest.categoria_id);
+      rest.categoria_id = null;
+    }
+    if ('subcategoria_id' in rest && rest.subcategoria_id && !isUUID(rest.subcategoria_id)) {
+      console.warn('[admin/productos PATCH] subcategoria_id not uuid, setting null', rest.subcategoria_id);
+      rest.subcategoria_id = null;
+    }
+    // Validación de existencia en categorias (solo si subcategoria_id está presente)
+    if (rest.subcategoria_id) {
+      const { data: subcatExists, error: subcatErr } = await supabaseAdmin
+        .from('categorias')
+        .select('id')
+        .eq('id', rest.subcategoria_id)
+        .single();
+      if (subcatErr || !subcatExists) {
+        console.warn('[admin/productos PATCH] subcategoria_id not found in categorias', rest.subcategoria_id);
+        rest.subcategoria_id = null;
+      }
+    }
     const allowed = [
       'nombre','descripcion','precio','slug','activo',
       'categoria_id','subcategoria_id',
@@ -139,11 +166,9 @@ export async function PATCH(req) {
       'imagen_url','colores','tallas','corte','imagenes'
     ];
     const payload = Object.fromEntries(Object.entries(rest).filter(([k]) => allowed.includes(k)));
-
     if (Object.keys(payload).length === 0) {
       return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
     }
-
     if ('precio' in payload) payload.precio = Number(payload.precio);
 
     const { data, error } = await supabaseAdmin
@@ -160,7 +185,7 @@ export async function PATCH(req) {
 
     return NextResponse.json({ message: 'Producto actualizado', data }, { status: 200 });
   } catch (err) {
-    console.error('Unexpected Error PATCH /productos:', err);
+    console.error('[admin/productos PATCH] error', err);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
   }
 }

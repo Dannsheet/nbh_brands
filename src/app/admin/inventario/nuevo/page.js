@@ -69,7 +69,7 @@ export default function NuevoInventarioPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Añadir Item al Inventario</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Añadir Item al Inventario</h1>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-8 space-y-6">
         <div>
           <label htmlFor="producto_id" className="block text-sm font-medium text-gray-700">Producto</label>

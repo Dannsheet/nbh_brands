@@ -14,7 +14,6 @@ export default function EditarProductoPage() {
 
   const [formData, setFormData] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -38,14 +37,14 @@ export default function EditarProductoPage() {
       }
       setFormData(productData);
 
-      // Fetch categories and subcategories
-      const { data: catData, error: catError } = await supabase.from('categorias').select('*');
-      if (catError) console.error('Error fetching categories', catError);
-      else setCategories(catData);
-
-      const { data: subcatData, error: subcatError } = await supabase.from('subcategorias').select('*');
-      if (subcatError) console.error('Error fetching subcategories', subcatError);
-      else setSubcategories(subcatData);
+      // Fetch categories
+      const { data: catData, error: catError } = await supabase.from('categorias').select('id, nombre, slug, parent_id');
+      if (catError) {
+        console.error('Error fetching categorias', catError);
+        setCategories([]);
+      } else {
+        setCategories(catData);
+      }
 
       setIsLoading(false);
     };
@@ -56,13 +55,14 @@ export default function EditarProductoPage() {
   }, [id]);
 
   useEffect(() => {
-    if (formData?.categoria_id && subcategories.length > 0) {
-      const filtered = subcategories.filter(sc => sc.categoria_id === formData.categoria_id);
+    // Filtrar subcategorías: parent_id === categoria seleccionada
+    if (formData?.categoria_id && categories.length > 0) {
+      const filtered = categories.filter(cat => cat.parent_id === formData.categoria_id);
       setFilteredSubcategories(filtered);
     } else {
       setFilteredSubcategories([]);
     }
-  }, [formData?.categoria_id, subcategories]);
+  }, [formData?.categoria_id, categories]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -86,11 +86,13 @@ export default function EditarProductoPage() {
     setIsSubmitting(true);
     setError(null);
 
+    // Validar UUID (versión simple)
+    const isUUID = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
     const payload = {
       ...formData,
       precio: parseFloat(formData.precio),
-      categoria_id: formData.categoria_id ? parseInt(formData.categoria_id, 10) : null,
-      subcategoria_id: formData.subcategoria_id ? parseInt(formData.subcategoria_id, 10) : null,
+      categoria_id: isUUID(formData.categoria_id) ? formData.categoria_id : null,
+      subcategoria_id: isUUID(formData.subcategoria_id) ? formData.subcategoria_id : null,
     };
 
     try {
@@ -115,7 +117,7 @@ export default function EditarProductoPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Editar Producto</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Editar Producto</h1>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-8 space-y-6">
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>
@@ -127,7 +129,7 @@ export default function EditarProductoPage() {
         </div>
         <div>
           <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700">Descripción</label>
-          <textarea name="descripcion" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} rows="4" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"></textarea>
+          <textarea name="descripcion" id="descripcion" value={formData.descripcion || ''} onChange={handleChange} rows="4" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-200 text-black"></textarea>
         </div>
         <div>
           <label htmlFor="precio" className="block text-sm font-medium text-gray-700">Precio</label>
@@ -137,14 +139,18 @@ export default function EditarProductoPage() {
           <label htmlFor="categoria_id" className="block text-sm font-medium text-gray-700">Categoría</label>
           <select name="categoria_id" id="categoria_id" value={formData.categoria_id || ''} onChange={handleChange} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md">
             <option value="">Seleccionar categoría</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            {categories.filter(c => c.parent_id === null).map(c => (
+              <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
           </select>
         </div>
         <div>
           <label htmlFor="subcategoria_id" className="block text-sm font-medium text-gray-700">Subcategoría</label>
           <select name="subcategoria_id" id="subcategoria_id" value={formData.subcategoria_id || ''} onChange={handleChange} disabled={!formData.categoria_id} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 rounded-md disabled:bg-gray-100">
             <option value="">Seleccionar subcategoría</option>
-            {filteredSubcategories.map(sc => <option key={sc.id} value={sc.id}>{sc.nombre}</option>)}
+            {filteredSubcategories.map(sc => (
+              <option key={sc.id} value={sc.id}>{sc.nombre}</option>
+            ))}
           </select>
         </div>
         <div className="flex items-center">

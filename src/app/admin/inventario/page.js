@@ -190,7 +190,7 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 uppercase">Inventario</h1>
+        <h1 className="text-2xl font-bold uppercase" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Inventario</h1>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Link href="/admin/inventario/nuevo" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">

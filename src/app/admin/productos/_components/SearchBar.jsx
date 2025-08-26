@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebouncedCallback } from 'use-debounce';
 import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function SearchBar({ placeholder = 'Buscar por nombre...' }) {
   const searchParams = useSearchParams();
@@ -43,8 +44,7 @@ export default function SearchBar({ placeholder = 'Buscar por nombre...' }) {
         onChange={handleChange}
         className="max-w-sm"
       />
-      <button type="submit" className="ml-2 btn">Buscar</button>
+      <Button type="submit" className="ml-2 bg-yellow-400 text-black hover:bg-yellow-500/90 rounded-md px-4 py-2 font-medium transition-colors">Buscar</Button>
     </form>
   );
 }
-
