@@ -23,13 +23,13 @@ export default function EditarUsuarioPage() {
     if (!id) return;
     const fetchUsuario = async () => {
       try {
-        const res = await fetch(`/api/admin/usuarios?id=${id}`);
-        if (!res.ok) throw new Error('Usuario no encontrado');
-        const data = await res.json();
-        setFormData({ 
-          nombre: data.usuario.nombre || '',
-          email: data.usuario.email || '',
-          rol: data.usuario.rol || 'cliente',
+        const res = await fetchSafe(`/api/admin/usuarios?id=${id}`);
+        if (res.error || res.status !== 200) throw new Error(res.error || 'Usuario no encontrado');
+        const usuario = res.data?.data || res.data?.usuario || res.data;
+        setFormData({
+          nombre: usuario.nombre || '',
+          email: usuario.email || '',
+          rol: usuario.rol || 'cliente',
         });
       } catch (err) {
         setError(err.message);
@@ -60,17 +60,14 @@ export default function EditarUsuarioPage() {
     }
 
     try {
-      const res = await fetch('/api/admin/usuarios', {
+      const res = await fetchSafe('/api/admin/usuarios', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Algo salió mal');
+      if (res.error || res.status !== 200) {
+        throw new Error(res.error || 'Algo salió mal');
       }
-
       toast.success('Usuario actualizado correctamente');
       router.push('/admin/usuarios');
     } catch (err) {

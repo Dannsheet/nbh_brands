@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase/client';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function NuevoInventarioPage() {
   const router = useRouter();
@@ -48,14 +49,13 @@ export default function NuevoInventarioPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/admin/inventario', {
+      const res = await fetchSafe('/api/admin/inventario', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Algo salió mal');
+      if (res.error || res.status !== 200) throw new Error(res.error || 'Algo salió mal');
 
       toast.success('Item de inventario añadido correctamente');
       router.push('/admin/inventario');

@@ -5,6 +5,7 @@ import { FiSearch, FiDownload, FiEdit2, FiSave, FiX, FiTrash2, FiPlus, FiArrowUp
 import Link from 'next/link';
 import ConfirmationModal from '@/components/admin/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 const DEBOUNCE_DELAY = 300; // ms
 
@@ -42,13 +43,14 @@ export default function InventoryPage() {
       const sortString = sortBy.map(s => `${s.desc ? '-' : ''}${s.id}`).join(',');
       if (sortString) params.append('sort_by', sortString);
 
-      const response = await fetch(`/api/admin/inventario?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory');
-      }
-      const { data, meta } = await response.json();
-      setInventory(data || []);
-      setPagination(prev => ({ ...prev, total: meta.total }));
+      const res = await fetchSafe(`/api/admin/inventario?${params.toString()}`);
+      if (res.error) throw new Error(res.error);
+      // Normalizar distintos shapes posibles:
+      const apiBody = res.data ?? null;
+      const inventoryList = apiBody?.data ?? apiBody ?? [];
+      const totalFromMeta = apiBody?.meta?.total ?? res.meta?.total ?? 0;
+      setInventory(inventoryList);
+      setPagination(prev => ({ ...prev, total: Number(totalFromMeta || 0) }));
     } catch (error) {
       console.error('Error fetching inventory:', error);
       toast.error('No se pudo cargar el inventario.');
@@ -134,7 +136,7 @@ export default function InventoryPage() {
   // Handle stock update
   const handleUpdateStock = async (itemId, newStock) => {
     try {
-      const { error } = await fetch(`/api/admin/inventario/${itemId}`, {
+      const { error } = await fetchSafe(`/api/admin/inventario/${itemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: parseInt(newStock, 10) })
@@ -166,7 +168,7 @@ export default function InventoryPage() {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      const { error } = await fetch(`/api/admin/inventario/${itemToDelete.id}`, {
+      const { error } = await fetchSafe(`/api/admin/inventario/${itemToDelete.id}`, {
         method: 'DELETE'
       });
 

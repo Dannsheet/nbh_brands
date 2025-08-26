@@ -18,8 +18,8 @@ export default function RegistroPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
 
-  const [formDisabled, setFormDisabled] = useState(true);
-  const [disabledMsg, setDisabledMsg] = useState('Registro deshabilitado temporalmente');
+  const [formDisabled, setFormDisabled] = useState(false);
+  const [disabledMsg, setDisabledMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -27,9 +27,6 @@ export default function RegistroPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(disabledMsg);
-    return;
-   
     setError('');
     setSuccessMessage('');
     setLoading(true);
@@ -158,9 +155,9 @@ export default function RegistroPage() {
               <div className="text-center text-sm text-gray-400">
                 <p>
                   ¿Ya tienes una cuenta?{' '}
-                  <Link href="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200">
-                    Inicia sesión
-                  </Link>
+                  { <Link href="/login" className="text-yellow-400 hover:text-yellow-300 font-medium transition-colors duration-200"> }
+                  <span className="text-yellow-400 cursor-not-allowed opacity-60 font-medium">Inicia sesión</span>
+                  {}
                 </p>
               </div>
             </>

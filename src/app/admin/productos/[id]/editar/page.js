@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase/client';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function EditarProductoPage() {
   const router = useRouter();
@@ -93,15 +94,11 @@ export default function EditarProductoPage() {
     };
 
     try {
-      const res = await fetch(`/api/admin/productos`, {
+      const { data, error } = await fetchSafe(`/api/admin/productos`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al actualizar el producto');
-
+      if (error) throw new Error(error);
       toast.success('Producto actualizado con éxito');
       router.push('/admin/productos');
     } catch (err) {

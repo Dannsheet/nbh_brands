@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { supabase } from '@/lib/supabase/client';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function NuevoProductoPage() {
   const router = useRouter();
@@ -75,14 +76,13 @@ export default function NuevoProductoPage() {
     };
 
     try {
-      const res = await fetch('/api/admin/productos', {
+      const res = await fetchSafe('/api/admin/productos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al crear el producto');
+      if (res.error || res.status !== 201) throw new Error(res.error || 'Error al crear el producto');
 
       toast.success('Producto creado con éxito');
       router.push('/admin/productos');

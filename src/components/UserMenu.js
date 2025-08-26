@@ -128,7 +128,7 @@ export default function UserMenu() {
               <Menu.Item>
                 {({ active }) => (
                   <Link
-                    href="/register"
+                    href="/registro"
                     className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${active ? 'bg-secondary text-primary' : 'text-accent hover:bg-gray-800'}`}>
                     Registrarse
                   </Link>

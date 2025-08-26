@@ -19,7 +19,7 @@ export default function OrdenDetalleAdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/admin/ordenes/${id}`);
+      const { data, error, status } = await fetchSafe(`/api/admin/ordenes/${id}`);
       if (!response.ok) {
         const err = await response.json();
         throw new Error(err.error || 'Error cargando la orden');
@@ -52,7 +52,7 @@ export default function OrdenDetalleAdminPage() {
 
     setProcessing(true);
     try {
-      const response = await fetch(`/api/admin/ordenes/${orden.id}`, {
+      const { data, error, status } = await fetchSafe(`/api/admin/ordenes/${orden.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, comprobanteId }),

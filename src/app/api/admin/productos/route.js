@@ -65,10 +65,13 @@ export async function GET(req) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      data,
-      meta: { total: count ?? data?.length ?? 0, page, limit, from, to }
-    }, { status: 200 });
+    // Normalizar activo → estado
+    const productos = data.map(p => ({
+      ...p,
+      estado: p.activo ? 'activo' : 'inactivo',
+      activo: undefined
+    }));
+    return NextResponse.json({ productos, total: count ?? productos.length ?? 0 }, { status: 200 });
   } catch (err) {
     console.error('Unexpected Error GET /productos:', err);
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });

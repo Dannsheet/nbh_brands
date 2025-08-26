@@ -7,6 +7,7 @@ import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { Button } from '@/components/ui/Button';
 import ConfirmationModal from '@/components/admin/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function ProductActions({ product }) {
   const router = useRouter();
@@ -14,13 +15,12 @@ export default function ProductActions({ product }) {
 
   const handleConfirmDelete = async () => {
     try {
-      const res = await fetch(`/api/admin/productos?id=${product.id}`, {
+      const res = await fetchSafe(`/api/admin/productos?id=${product.id}`, {
         method: 'DELETE',
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al eliminar el producto');
+      if (res.error || res.status !== 200) {
+        throw new Error(res.error || 'Error al eliminar el producto');
       }
 
       setIsModalOpen(false);
@@ -35,8 +35,14 @@ export default function ProductActions({ product }) {
 
   return (
     <>
-      <Button variant="outline" size="sm" asChild className="mr-2">
-        <Link href={`/admin/productos/${product.id}/editar`}>
+      <Button
+        className="bg-yellow-400 text-black hover:bg-yellow-500 border-yellow-400 min-w-[100px]"
+        size="sm"
+        asChild
+      >
+        <Link
+          href={`/admin/productos/${product.id}/editar`}
+        >
           <FiEdit className="mr-2 h-4 w-4" />
           Editar
         </Link>
