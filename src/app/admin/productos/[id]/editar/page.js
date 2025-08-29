@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { TALLAS_CAMISETAS } from '@/constants/tallas';
+import { COLORES_CAMISETAS } from '@/constants/colores';
+import ImageUploader from '@/components/admin/ImageUploader';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -66,6 +69,20 @@ export default function EditarProductoPage() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'tallas') {
+      const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
+      setFormData(prev => ({ ...prev, tallas: options }));
+      return;
+    }
+    if (name === 'colores') {
+      const options = Array.from(e.target.selectedOptions).map(opt => opt.value);
+      setFormData(prev => ({ ...prev, colores: options, colorPersonalizado: '' }));
+      return;
+    }
+    if (name === 'colorPersonalizado') {
+      setFormData(prev => ({ ...prev, colorPersonalizado: value }));
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -88,11 +105,19 @@ export default function EditarProductoPage() {
 
     // Validar UUID (versión simple)
     const isUUID = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    // Procesar colores finales
+    let coloresFinal = formData.colores || [];
+    if (coloresFinal.includes('Otro') && formData.colorPersonalizado) {
+      coloresFinal = coloresFinal.filter(c => c !== 'Otro').concat(formData.colorPersonalizado);
+    }
     const payload = {
       ...formData,
       precio: parseFloat(formData.precio),
       categoria_id: isUUID(formData.categoria_id) ? formData.categoria_id : null,
       subcategoria_id: isUUID(formData.subcategoria_id) ? formData.subcategoria_id : null,
+      imagenes: formData.imagenes,
+      tallas: formData.tallas || [],
+      colores: coloresFinal,
     };
 
     try {
@@ -119,6 +144,7 @@ export default function EditarProductoPage() {
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-6" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Editar Producto</h1>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-8 space-y-6">
+        <ImageUploader urls={formData.imagenes || []} onUpload={urls => setFormData(prev => ({ ...prev, imagenes: urls }))} />
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>
           <input type="text" name="nombre" id="nombre" value={formData.nombre} onChange={handleChange} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
@@ -157,6 +183,52 @@ export default function EditarProductoPage() {
           <input type="checkbox" name="activo" id="activo" checked={formData.activo} onChange={handleChange} className="h-4 w-4 text-indigo-600 border-gray-300 rounded" />
           <label htmlFor="activo" className="ml-2 block text-sm text-gray-900">Activo</label>
         </div>
+        <div>
+          <label htmlFor="tallas" className="block text-sm font-medium text-gray-700">Tallas disponibles</label>
+          <select
+            name="tallas"
+            id="tallas"
+            multiple
+            value={formData.tallas || []}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          >
+            {TALLAS_CAMISETAS.map(talla => (
+              <option key={talla} value={talla}>{talla}</option>
+            ))}
+          </select>
+          <small className="text-gray-500">Ctrl+Click o Cmd+Click para seleccionar varias</small>
+        </div>
+        <div>
+          <label htmlFor="colores" className="block text-sm font-medium text-gray-700">Colores disponibles</label>
+          <select
+            name="colores"
+            id="colores"
+            multiple
+            value={formData.colores || []}
+            onChange={handleChange}
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+          >
+            {COLORES_CAMISETAS.map(color => (
+              <option key={color} value={color}>{color}</option>
+            ))}
+          </select>
+          <small className="text-gray-500">Ctrl+Click o Cmd+Click para seleccionar varias</small>
+        </div>
+        {formData.colores && formData.colores.includes('Otro') && (
+          <div>
+            <label htmlFor="colorPersonalizado" className="block text-sm font-medium text-gray-700">Color personalizado</label>
+            <input
+              type="text"
+              name="colorPersonalizado"
+              id="colorPersonalizado"
+              value={formData.colorPersonalizado || ''}
+              onChange={handleChange}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm"
+              placeholder="Ej: Fucsia metálico, Verde neón..."
+            />
+          </div>
+        )}
         <div className="flex justify-end space-x-2 pt-4">
           <Link href="/admin/productos" className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">Cancelar</Link>
           <button type="submit" disabled={isSubmitting} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50">

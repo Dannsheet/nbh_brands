@@ -1,7 +1,8 @@
 // src/app/api/admin/productos/route.js
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,8 @@ const BASE_SELECT = `
 
 export async function GET(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const url = new URL(req.url);
@@ -80,7 +82,8 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const body = await req.json();
@@ -92,14 +95,25 @@ export async function POST(req) {
       }
     }
 
+    const isUUID = v => typeof v === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+    let categoria_id = body.categoria_id;
+    let subcategoria_id = body.subcategoria_id;
+    if (categoria_id && !isUUID(categoria_id)) {
+      console.warn('[admin/productos POST] categoria_id not uuid, setting null', categoria_id);
+      categoria_id = null;
+    }
+    if (subcategoria_id && !isUUID(subcategoria_id)) {
+      console.warn('[admin/productos POST] subcategoria_id not uuid, setting null', subcategoria_id);
+      subcategoria_id = null;
+    }
     const payload = {
       nombre: body.nombre,
       descripcion: body.descripcion ?? '',
       precio: Number(body.precio),
       slug: String(body.slug),
       activo: body.activo ?? true,
-      categoria_id: body.categoria_id ?? null,
-      subcategoria_id: body.subcategoria_id ?? null,
+      categoria_id,
+      subcategoria_id,
       es_colaboracion: body.es_colaboracion ?? false,
       etiqueta: body.etiqueta ?? null,
       descuento: body.descuento ?? 0,
@@ -107,7 +121,7 @@ export async function POST(req) {
       colores: body.colores ?? null,
       tallas: body.tallas ?? null,
       corte: body.corte ?? null,
-      imagenes: body.imagenes ?? null
+      imagenes: Array.isArray(body.imagenes) ? body.imagenes : null
     };
 
     const { data, error } = await supabaseAdmin.from('productos').insert([payload]).select(BASE_SELECT).single();
@@ -125,7 +139,8 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const body = await req.json();
@@ -192,7 +207,8 @@ export async function PATCH(req) {
 
 export async function DELETE(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const { searchParams } = new URL(req.url);

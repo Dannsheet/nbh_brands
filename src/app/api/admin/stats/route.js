@@ -1,11 +1,13 @@
 // src/app/api/admin/stats/route.js
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
+import { cookies } from 'next/headers';
 
 export async function GET(request) {
   try {
-    const auth = await checkIsAdmin(request);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
