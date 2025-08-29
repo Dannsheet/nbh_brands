@@ -65,10 +65,16 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/admin/stats');
-        if (!response.ok) return;
-        const { data } = await response.json();
-        setPendingOrders(data.pendingOrders || 0);
+        const res = await import('@/lib/fetchSafe').then(mod => mod.fetchSafe('/api/admin/stats'));
+        if (res.error) {
+          if (res.status === 401) {
+            console.warn('Admin stats 401 — sesión inválida');
+            return;
+          }
+          return;
+        }
+        const data = res.data;
+        setPendingOrders(data?.pendingOrders || 0);
       } catch (error) {
         console.error('Error fetching admin stats:', error);
       }

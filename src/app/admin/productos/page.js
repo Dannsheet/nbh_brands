@@ -1,7 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 
 import { Button } from '@/components/ui/Button';
 import {
@@ -23,9 +23,10 @@ const ITEMS_PER_PAGE = 10;
 async function getProducts({ search, page }) {
   const supabase = createServerComponentClient({ cookies });
 
+  // Pedimos activo, no estado
   let query = supabase
     .from('productos')
-    .select('id, nombre, precio, estado, imagen_url', { count: 'exact' });
+    .select('id, nombre, precio, activo, imagen_url', { count: 'exact' });
 
   if (search) {
     query = query.ilike('nombre', `%${search}%`);
@@ -42,21 +43,48 @@ async function getProducts({ search, page }) {
     return { products: [], count: 0 };
   }
 
-  return { products: data, count };
+  // Mapear activo -> estado (string) para la UI existente
+  const products = (data || []).map((p) => ({
+    ...p,
+    estado: p.activo ? 'activo' : 'inactivo',
+  }));
+
+  return { products, count };
 }
 
-export default async function ProductosAdminPage({ searchParams }) {
-  const search = searchParams.q || '';
-  const page = parseInt(searchParams.page || '1', 10);
+export default async function ProductosAdminPage(props) {
+  // OBLIGATORIO: await cookies() para evitar la advertencia de Next
+  const cookieStore = await cookies();
+  const tokenCookie = cookieStore.get?.('sb-bwychvsydhqtjkntqkta-auth-token'); // ajusta nombre si tu cookie es otra
+  let token = tokenCookie?.value ?? null;
+  // Robustecer: parsear array stringificado, objeto stringificado o string con comillas
+  if (token && (token.startsWith('[') || token.startsWith('"') || token.startsWith('{'))) {
+    try {
+      const parsed = JSON.parse(token);
+      if (Array.isArray(parsed)) token = parsed[0];
+      else if (parsed && typeof parsed === 'object') token = parsed.access_token || parsed.token || token;
+      else token = parsed;
+    } catch (e) {
+      if (token.startsWith('"') && token.endsWith('"')) token = token.slice(1, -1);
+      // else dejar como está
+    }
+  }
+
+  // SEARCHPARAMS defensivo (Promise-like o plain object)
+  const rawSearchParams = props?.searchParams;
+  const searchParams = (rawSearchParams && typeof rawSearchParams.then === 'function')
+    ? await rawSearchParams
+    : (rawSearchParams || {});
+  const search = String(searchParams.q ?? '');
+  const page = parseInt(String(searchParams.page ?? '1'), 10);
 
   const { products, count } = await getProducts({ search, page });
-
   const totalPages = Math.ceil(count / ITEMS_PER_PAGE);
 
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold uppercase">Gestión de Productos</h1>
+        <h1 className="text-2xl font-bold uppercase" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Gestión de Productos</h1>
         <Button asChild>
           <Link href="/admin/productos/nuevo">Crear Producto</Link>
         </Button>
@@ -70,11 +98,11 @@ export default async function ProductosAdminPage({ searchParams }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[80px]">Imagen</TableHead>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
+              <TableHead className="w-[80px] text-black">Imagen</TableHead>
+              <TableHead className="text-black">Nombre</TableHead>
+              <TableHead className="text-black">Precio</TableHead>
+              <TableHead className="text-black">Estado</TableHead>
+              <TableHead className="text-right text-black">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -82,22 +110,21 @@ export default async function ProductosAdminPage({ searchParams }) {
               products.map((product) => (
                 <TableRow key={product.id}>
                   <TableCell>
-                    <Image
-                      src={product.imagen_url || '/placeholder.png'}
+                    <SafeImage
+                      src={product.imagen_url}
                       alt={product.nombre}
                       width={50}
                       height={50}
-                      className="rounded-md object-cover"
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{product.nombre}</TableCell>
-                  <TableCell>${product.precio}</TableCell>
+                  <TableCell className="font-medium text-black">{product.nombre}</TableCell>
+                  <TableCell className="text-black">${product.precio}</TableCell>
                   <TableCell>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      className={`px-2 py-1 rounded-full text-xs font-semibold text-black bg-opacity-80 ${
                         product.estado === 'activo'
-                          ? 'bg-green-900 text-green-300'
-                          : 'bg-gray-700 text-gray-300'
+                          ? 'bg-green-200'
+                          : 'bg-gray-200'
                       }`}>
                       {product.estado}
                     </span>

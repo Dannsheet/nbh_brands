@@ -1,7 +1,8 @@
 // src/app/api/admin/inventario/route.js
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
+import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,8 @@ function parsePositiveInt(value, fallback) {
 // GET con ordenamiento múltiple y paginación
 export async function GET(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -76,7 +78,8 @@ export async function GET(req) {
 // POST para crear un nuevo item de inventario
 export async function POST(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -119,7 +122,8 @@ export async function POST(req) {
 // PATCH para actualizar un item de inventario
 export async function PATCH(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -158,7 +162,8 @@ export async function PATCH(req) {
 // DELETE para eliminar un item de inventario
 export async function DELETE(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const cookieStore = await cookies();
+    const auth = await checkIsAdminFromCookieStore(cookieStore);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }

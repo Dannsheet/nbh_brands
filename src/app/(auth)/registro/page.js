@@ -18,8 +18,8 @@ export default function RegistroPage() {
   const [successMessage, setSuccessMessage] = useState('');
   const router = useRouter();
 
-  const [formDisabled, setFormDisabled] = useState(true);
-  const [disabledMsg, setDisabledMsg] = useState('Registro deshabilitado temporalmente');
+  const [formDisabled, setFormDisabled] = useState(false);
+  const [disabledMsg, setDisabledMsg] = useState('');
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -27,9 +27,6 @@ export default function RegistroPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(disabledMsg);
-    return;
-   
     setError('');
     setSuccessMessage('');
     setLoading(true);

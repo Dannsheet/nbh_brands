@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react';
 import { FiPlus, FiEdit, FiTrash2 } from 'react-icons/fi';
 import ConfirmationModal from '@/components/admin/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function UsuariosPage() {
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-2xl font-bold mb-4">Usuarios registrados</h1>
+      <h1 className="text-2xl font-bold mb-4" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Usuarios registrados</h1>
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <UsuariosTable />
       </div>
@@ -26,9 +27,12 @@ function UsuariosTable() {
 
   const fetchUsuarios = async () => {
     try {
-      const res = await fetch('/api/admin/usuarios');
-      const json = await res.json();
-      setUsuarios(json.usuarios || []);
+      const res = await fetchSafe('/api/admin/usuarios');
+      if (res.error) throw new Error(res.error);
+      // Normalizar distintos shapes posibles:
+      const apiBody = res.data ?? null;
+      const usuariosList = apiBody?.usuarios ?? apiBody ?? [];
+      setUsuarios(usuariosList);
     } catch (err) {
       console.error(err);
       setError('Error al cargar usuarios');
@@ -48,14 +52,10 @@ function UsuariosTable() {
     if (!userToDelete) return;
 
     try {
-      const res = await fetch(`/api/admin/usuarios?id=${userToDelete.id}`, {
+      const { error: deleteError } = await fetchSafe(`/api/admin/usuarios?id=${userToDelete.id}`, {
         method: 'DELETE',
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Error al eliminar usuario');
-      }
+      if (deleteError) throw new Error(deleteError);
 
       toast.success('Usuario eliminado correctamente');
       // Refresh user list

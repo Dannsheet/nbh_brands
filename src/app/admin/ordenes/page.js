@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 const DEBOUNCE_DELAY = 500;
 
@@ -34,14 +35,14 @@ export default function OrdenesAdminPage() {
       const sortString = sortBy.map(s => `${s.desc ? '-' : ''}${s.id}`).join(',');
       if (sortString) params.append('sort_by', sortString);
 
-      const response = await fetch(`/api/admin/ordenes?${params.toString()}`);
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'Error al cargar las órdenes');
-      }
-      const { data, meta } = await response.json();
-      setOrdenes(data || []);
-      setPagination(prev => ({ ...prev, total: meta.total }));
+      const res = await fetchSafe(`/api/admin/ordenes?${params.toString()}`);
+      if (res.error) throw new Error(res.error);
+      // Soportar ambas formas de respuesta
+      const apiBody = res.data ?? null;
+      const ordenesList = apiBody?.data ?? apiBody ?? [];
+      const totalFromMeta = apiBody?.meta?.total ?? res.meta?.total ?? 0;
+      setOrdenes(ordenesList);
+      setPagination(prev => ({ ...prev, total: Number(totalFromMeta || 0) }));
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -97,7 +98,7 @@ export default function OrdenesAdminPage() {
   return (
     <section className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">📦 Órdenes</h1>
+        <h1 className="text-3xl font-bold" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>📦 Órdenes</h1>
       </div>
 
       {/* Filters */}
@@ -142,10 +143,10 @@ export default function OrdenesAdminPage() {
             <tbody>
               {ordenes.map((orden) => (
                 <tr key={orden.id} className="border-t border-gray-700 hover:bg-gray-800">
-                  <td className="p-2">{orden.usuario?.nombre || '—'}</td>
-                  <td className="p-2">{orden.usuario?.email || '—'}</td>
+                  <td className="p-2 text-black">{orden.usuario?.nombre || '—'}</td>
+                  <td className="p-2 text-black">{orden.usuario?.email || '—'}</td>
                   <td className="p-2">{new Date(orden.fecha).toLocaleString()}</td>
-                  <td className="p-2 font-bold text-yellow-400">${orden.total.toFixed(2)}</td>
+                  <td className="p-2 font-bold text-black">${orden.total.toFixed(2)}</td>
                   <td className="p-2">
                     <span
                       className={`px-2 py-1 rounded text-xs font-semibold
@@ -188,14 +189,14 @@ export default function OrdenesAdminPage() {
           <button
             onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
             disabled={pagination.page <= 1}
-            className="px-3 py-1 bg-gray-800 rounded-md disabled:opacity-50"
+            className="px-3 py-1 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 disabled:opacity-50"
           >
             Anterior
           </button>
           <button
             onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
             disabled={pagination.page * pagination.limit >= pagination.total}
-            className="px-3 py-1 bg-gray-800 rounded-md disabled:opacity-50"
+            className="px-3 py-1 bg-yellow-400 text-black rounded-md hover:bg-yellow-500 disabled:opacity-50"
           >
             Siguiente
           </button>

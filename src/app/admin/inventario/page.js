@@ -5,6 +5,7 @@ import { FiSearch, FiDownload, FiEdit2, FiSave, FiX, FiTrash2, FiPlus, FiArrowUp
 import Link from 'next/link';
 import ConfirmationModal from '@/components/admin/ConfirmationModal';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 const DEBOUNCE_DELAY = 300; // ms
 
@@ -42,13 +43,14 @@ export default function InventoryPage() {
       const sortString = sortBy.map(s => `${s.desc ? '-' : ''}${s.id}`).join(',');
       if (sortString) params.append('sort_by', sortString);
 
-      const response = await fetch(`/api/admin/inventario?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch inventory');
-      }
-      const { data, meta } = await response.json();
-      setInventory(data || []);
-      setPagination(prev => ({ ...prev, total: meta.total }));
+      const res = await fetchSafe(`/api/admin/inventario?${params.toString()}`);
+      if (res.error) throw new Error(res.error);
+      // Normalizar distintos shapes posibles:
+      const apiBody = res.data ?? null;
+      const inventoryList = apiBody?.data ?? apiBody ?? [];
+      const totalFromMeta = apiBody?.meta?.total ?? res.meta?.total ?? 0;
+      setInventory(inventoryList);
+      setPagination(prev => ({ ...prev, total: Number(totalFromMeta || 0) }));
     } catch (error) {
       console.error('Error fetching inventory:', error);
       toast.error('No se pudo cargar el inventario.');
@@ -134,7 +136,7 @@ export default function InventoryPage() {
   // Handle stock update
   const handleUpdateStock = async (itemId, newStock) => {
     try {
-      const { error } = await fetch(`/api/admin/inventario/${itemId}`, {
+      const { error } = await fetchSafe(`/api/admin/inventario/${itemId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stock: parseInt(newStock, 10) })
@@ -166,7 +168,7 @@ export default function InventoryPage() {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     try {
-      const { error } = await fetch(`/api/admin/inventario/${itemToDelete.id}`, {
+      const { error } = await fetchSafe(`/api/admin/inventario/${itemToDelete.id}`, {
         method: 'DELETE'
       });
 
@@ -188,7 +190,7 @@ export default function InventoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold text-gray-900 uppercase">Inventario</h1>
+        <h1 className="text-2xl font-bold uppercase" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Inventario</h1>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Link href="/admin/inventario/nuevo" className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">

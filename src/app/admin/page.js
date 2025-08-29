@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+      <h1 className="text-3xl font-bold" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Panel de Administración</h1>
       
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -120,7 +120,7 @@ export default function UserMenu() {
                 {({ active }) => (
                   <Link
                     href="/login"
-                    className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${active ? 'bg-secondary text-primary' : 'text-accent hover:bg-gray-800'}`}>
+                    className="block px-4 py-2 text-sm font-medium transition-colors duration-200" style={{ color: active ? '#000' : '#fff', background: active ? 'rgb(250 204 21 / 1)' : 'transparent' }}>
                     Iniciar sesión
                   </Link>
                 )}
@@ -128,8 +128,8 @@ export default function UserMenu() {
               <Menu.Item>
                 {({ active }) => (
                   <Link
-                    href="/register"
-                    className={`block px-4 py-2 text-sm font-medium transition-colors duration-200 ${active ? 'bg-secondary text-primary' : 'text-accent hover:bg-gray-800'}`}>
+                    href="/registro"
+                    className="block px-4 py-2 text-sm font-medium transition-colors duration-200" style={{ color: active ? '#000' : '#fff', background: active ? 'rgb(250 204 21 / 1)' : 'transparent' }}>
                     Registrarse
                   </Link>
                 )}

@@ -17,7 +17,7 @@ export default function PaginationControls({ currentPage, totalPages }) {
   return (
     <div className="flex items-center justify-center gap-4 mt-6">
       <Button
-        variant="outline"
+        className="bg-yellow-400 text-black hover:bg-yellow-500 border-yellow-400 min-w-[100px]"
         onClick={() => router.push(createPageURL(currentPage - 1))}
         disabled={currentPage <= 1}
       >
@@ -27,7 +27,7 @@ export default function PaginationControls({ currentPage, totalPages }) {
         Página {currentPage} de {totalPages}
       </span>
       <Button
-        variant="outline"
+        className="bg-yellow-400 text-black hover:bg-yellow-500 border-yellow-400 min-w-[100px]"
         onClick={() => router.push(createPageURL(currentPage + 1))}
         disabled={currentPage >= totalPages}
       >

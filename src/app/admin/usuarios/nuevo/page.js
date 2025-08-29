@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { fetchSafe } from '@/lib/fetchSafe';
 
 export default function NuevoUsuarioPage() {
   const router = useRouter();
@@ -33,7 +34,7 @@ export default function NuevoUsuarioPage() {
     }
 
     try {
-      const res = await fetch('/api/admin/usuarios', {
+      const res = await fetchSafe('/api/admin/usuarios', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -41,10 +42,8 @@ export default function NuevoUsuarioPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Algo salió mal');
+      if (res.error || res.status !== 200) {
+        throw new Error(res.error || 'Algo salió mal');
       }
 
       toast.success('Usuario creado correctamente');
@@ -59,7 +58,7 @@ export default function NuevoUsuarioPage() {
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Crear Nuevo Usuario</h1>
+      <h1 className="text-2xl font-bold mb-6" style={{ color: 'rgb(250 204 21 / var(--tw-bg-opacity, 1))' }}>Crear Nuevo Usuario</h1>
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-4 sm:p-8 space-y-6">
         <div>
           <label htmlFor="nombre" className="block text-sm font-medium text-gray-700">Nombre</label>

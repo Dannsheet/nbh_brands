@@ -1,56 +1,78 @@
 // src/lib/admin-auth.js
-import createClient from '@/lib/supabase/server';
+// src/lib/admin-auth.js
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import { cookies } from 'next/headers';
 
-/**
- * checkIsAdmin(req):
- *  - Si hay x-admin-secret y coincide con ADMIN_API_KEY -> OK
- *  - Si hay Bearer token -> valida usuario y rol === 'admin' en tabla `usuarios`
- * Retorna { ok: true } o { ok: false, status, message }
- */
-export async function checkIsAdmin(req) {
-  // 1) Header secreto (útil para previews en Vercel)
-  const adminSecret = req.headers.get('x-admin-secret');
-  if (adminSecret && process.env.ADMIN_API_KEY && adminSecret === process.env.ADMIN_API_KEY) {
-    return { ok: true };
-  }
+const isUUID = v => typeof v === 'string' && /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(v);
 
-  // 2) Bearer token
-  const authHeader = req.headers.get('authorization') || '';
-  const match = authHeader.match(/^Bearer\s+(.+)$/i);
-  if (!match) {
-    return { ok: false, status: 401, message: 'Missing Authorization token or x-admin-secret' };
-  }
+// simple in-memory cache + dedupe
+const cache = new Map();
+const pending = new Map();
+const TTL = 2 * 60 * 1000;
 
-  const token = match[1];
-  const supabase = createClient();
+async function fetchUser(token) {
+  if (!token) return null;
+  const c = cache.get(token);
+  if (c && c.expire > Date.now()) return c.user;
+  if (pending.has(token)) return pending.get(token);
 
+  const p = (async () => {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error) throw error;
+    const user = data?.user ?? null;
+    cache.set(token, { user, expire: Date.now() + TTL });
+    return user;
+  })();
+
+  pending.set(token, p);
   try {
-    // Validar usuario a partir del token
-    const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return { ok: false, status: 401, message: 'Invalid user token' };
+    return await p;
+  } finally {
+    pending.delete(token);
+  }
+}
+
+export async function checkIsAdminFromCookieStore(cookieStore) {
+  try {
+    const cookieStoreUsed = cookieStore ?? await cookies();
+    const raw = cookieStoreUsed.get?.('sb-bwychvsydhqtjkntqkta-auth-token')?.value
+      || cookieStoreUsed.get?.('sb-bwychvsydhqtjkntqkta-auth-token.0')?.value
+      || null;
+    if (!raw) return { ok: false, status: 401, message: 'No auth token' };
+
+    let token = raw;
+    try {
+      if (token.startsWith('[')) {
+        const parsed = JSON.parse(token);
+        token = Array.isArray(parsed) ? parsed[0] : token;
+      }
+    } catch (e) {
+      // keep token as-is
     }
 
-    const userId = userData.user.id;
+    const user = await fetchUser(token);
+    if (!user) return { ok: false, status: 401, message: 'Invalid token' };
 
-    // Verificar rol en tabla usuarios
-    const { data: perfil, error: perfilErr } = await supabase
+    // validate role in usuarios table
+    const { data: perfil, error: perfilErr } = await supabaseAdmin
       .from('usuarios')
-      .select('id, rol')
-      .eq('id', userId)
+      .select('rol')
+      .eq('id', user.id)
+      .limit(1)
       .maybeSingle();
 
     if (perfilErr) {
-      console.error('Error fetching perfil:', perfilErr);
-      return { ok: false, status: 403, message: 'Error verificando permisos' };
-    }
-    if (!perfil || perfil.rol !== 'admin') {
-      return { ok: false, status: 403, message: 'Acceso denegado: se requiere rol admin' };
+      console.warn('admin-auth: error fetching perfil', perfilErr);
+      return { ok: false, status: 500, message: 'Error verificando perfil' };
     }
 
-    return { ok: true };
+    const rol = perfil?.rol ?? null;
+    const isAdmin = rol === 'admin' || rol === 'superadmin';
+
+    return { ok: true, user, isAdmin };
   } catch (err) {
     console.error('checkIsAdmin error:', err);
-    return { ok: false, status: 500, message: 'Error interno verificando admin' };
+    if (err?.status === 429) return { ok: false, status: 429, message: 'Rate limit' };
+    return { ok: false, status: 500, message: 'Error verificando admin' };
   }
 }
