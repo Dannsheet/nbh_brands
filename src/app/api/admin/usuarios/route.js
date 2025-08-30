@@ -1,7 +1,7 @@
 // src/app/api/admin/usuarios/route.js
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function GET(req, { params }) {
   const id = searchParams.get('id');
 
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }

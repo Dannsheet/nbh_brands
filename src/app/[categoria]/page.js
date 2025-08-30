@@ -1,3 +1,5 @@
+import React from "react";
+import Image from "next/image";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { deepSanitize } from "@/lib/deepSanitize";
 import { sanitizeProductos } from "@/lib/sanitize";
@@ -42,7 +44,7 @@ export default async function CategoriaPage({ params }) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
         {productos.map((producto) => (
           <div key={producto.id} className="border p-4">
-            <img src={producto.imagen_url} alt={producto.nombre} />
+            <Image src={producto.imagen_url} alt={producto.nombre} width={400} height={400} className="object-cover" />
             <h2 className="font-semibold">{producto.nombre}</h2>
             <p>${producto.precio}</p>
           </div>

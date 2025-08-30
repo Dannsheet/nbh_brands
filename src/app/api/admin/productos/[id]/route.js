@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +20,7 @@ export async function GET(req, { params }) {
   if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const { data, error } = await supabaseAdmin
@@ -50,7 +50,7 @@ export async function PATCH(req, { params }) {
   if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const body = await req.json();
@@ -96,7 +96,7 @@ export async function DELETE(req, { params }) {
   if (!id) return NextResponse.json({ error: 'Falta ID del producto' }, { status: 400 });
 
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) return NextResponse.json({ error: auth.message }, { status: auth.status });
 
     const { error } = await supabaseAdmin.from('productos').delete().eq('id', id);
