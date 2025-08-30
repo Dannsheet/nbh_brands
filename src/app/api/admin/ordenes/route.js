@@ -1,7 +1,7 @@
 // src/app/api/admin/ordenes/route.js
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ const ALLOWED_SORT = new Set(['fecha', 'total', 'estado', 'usuarios.nombre', 'us
 
 export async function GET(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -77,7 +77,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -117,7 +117,7 @@ export async function POST(req) {
 
 export async function PATCH(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -154,7 +154,7 @@ export async function PATCH(req) {
 
 export async function DELETE(req) {
   try {
-    const auth = await checkIsAdmin(req);
+    const auth = await checkIsAdminFromCookieStore(req);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }

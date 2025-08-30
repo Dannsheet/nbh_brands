@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useCallback } from "react";
+import { createContext, useContext, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import toast from "react-hot-toast";
 
@@ -23,7 +23,7 @@ export function CartProvider({ children }) {
     revalidateOnFocus: false,
   });
 
-  const items = data?.items || [];
+  const items = useMemo(() => data?.items || [], [data]);
 
   // 🔹 Calcular cantidad total de items
   const totalCantidad = items.reduce((acc, item) => acc + (item.cantidad ?? item.stock ?? 1), 0);

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { checkIsAdmin } from '@/lib/admin-auth';
+import { checkIsAdminFromCookieStore } from '@/lib/admin-auth';
 
 // GET: Obtener detalles de una orden específica
 export async function GET(request, { params }) {
   try {
-    const auth = await checkIsAdmin(request);
+    const auth = await checkIsAdminFromCookieStore(request);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
@@ -53,7 +53,7 @@ export async function GET(request, { params }) {
 // PUT: Actualizar estado de una orden (verificar/rechazar pago)
 export async function PUT(request, { params }) {
   try {
-    const auth = await checkIsAdmin(request);
+    const auth = await checkIsAdminFromCookieStore(request);
     if (!auth.ok) {
       return NextResponse.json({ error: auth.message }, { status: auth.status });
     }

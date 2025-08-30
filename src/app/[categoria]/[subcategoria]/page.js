@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase/client";
 import { sanitizeProductos } from "@/lib/sanitize";
 import { deepSanitize } from "@/lib/deepSanitize";
+import Image from "next/image";
 
 export default async function SubcategoriaPage({ params }) {
   const { categoria, subcategoria } = await params;
@@ -63,7 +64,7 @@ export default async function SubcategoriaPage({ params }) {
         <ul className="grid grid-cols-2 gap-4">
           {productos.map((p) => (
             <li key={p.id} className="border p-4 rounded">
-              <img src={p.imagen_url} alt={p.nombre} className="mb-2" />
+              <Image src={p.imagen_url} alt={p.nombre} width={400} height={400} className="mb-2 object-cover" />
               <h2>{p.nombre}</h2>
               <p>${p.precio}</p>
             </li>
