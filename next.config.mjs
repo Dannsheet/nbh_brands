@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
+        unoptimized: true, // ⚠️ Desactiva el optimizador de Vercel para evitar el error 402
         remotePatterns: [
             {
                 protocol: 'https',
